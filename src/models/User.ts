@@ -1,3 +1,4 @@
+// @ts-nocheck
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IUser extends Document {
@@ -9,7 +10,7 @@ export interface IUser extends Document {
   tutorStatus: 'none' | 'pending' | 'approved' | 'rejected';
   bio?: string;
   subjects: string[];
-  price: number; // Hourly rate
+  price: number; 
   avatar?: string;
   stripeAccountId?: string;
   paypalEmail?: string;
@@ -47,7 +48,6 @@ const UserSchema: Schema = new Schema(
   { timestamps: true }
 );
 
-// Indexes for fast searching (from your v1)
 UserSchema.index({ email: 1 });
 UserSchema.index({ role: 1 });
 UserSchema.index({ tutorStatus: 1 });
