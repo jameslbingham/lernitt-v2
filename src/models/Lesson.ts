@@ -7,9 +7,14 @@ export interface ILesson extends Document {
   subject: string;
   startTime: Date;
   endTime: Date;
-  price: number;
+  price: number; // in cents
+  currency: string;
+  status: 'booked' | 'paid' | 'confirmed' | 'completed' | 'cancelled' | 'expired';
   isPaid: boolean;
-  status: 'booked' | 'paid' | 'confirmed' | 'completed' | 'cancelled';
+  paidAt?: Date;
+  isTrial: boolean;
+  reschedulable: boolean;
+  createdAt: Date;
 }
 
 const LessonSchema: Schema = new Schema(
@@ -20,12 +25,16 @@ const LessonSchema: Schema = new Schema(
     startTime: { type: Date, required: true },
     endTime: { type: Date, required: true },
     price: { type: Number, default: 0 },
-    isPaid: { type: Boolean, default: false },
+    currency: { type: String, default: 'EUR' },
     status: { 
       type: String, 
-      enum: ['booked', 'paid', 'confirmed', 'completed', 'cancelled'], 
+      enum: ['booked', 'paid', 'confirmed', 'completed', 'cancelled', 'expired'], 
       default: 'booked' 
     },
+    isPaid: { type: Boolean, default: false },
+    paidAt: { type: Date },
+    isTrial: { type: Boolean, default: false },
+    reschedulable: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
