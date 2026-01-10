@@ -3,15 +3,18 @@ import clientPromise from '@/lib/database/mongodb';
 import { ObjectId } from 'mongodb';
 
 /**
- * Calculates and queues a payout for a tutor after a completed lesson.
- * Implements the 85% Tutor / 15% Platform split.
+ * Merged Payout Manager:
+ * Calculates the 85% Tutor / 15% Platform split using USD as the base.
+ * Automatically selects provider based on tutor profile (PayPal or Stripe).
  */
 export async function queueTutorPayout(lessonId: string) {
   const dbClient = await clientPromise;
   const db = dbClient.db();
 
-  // 1. Fetch the lesson and the tutor
+  // 1. Fetch the lesson and ensure it's eligible for payout
   const lesson = await db.collection('lessons').findOne({ _id: new ObjectId(lessonId) });
+  
+  // Trials are free (€0/$0) and only completed lessons can trigger payouts
   if (!lesson || lesson.isTrial || lesson.status !== 'completed') {
     return { success: false, reason: 'Lesson not eligible for payout' };
   }
@@ -20,7 +23,8 @@ export async function queueTutorPayout(lessonId: string) {
   if (!tutor) return { success: false, reason: 'Tutor not found' };
 
   // 2. 💰 COMMISSION CALCULATION (85% to Tutor, 15% to Lernitt)
-  // Logic from v1 lessons.js: Math.floor(rawAmountCents * 0.85)
+  // We work in Cents to avoid floating point math errors
+  // The 'lesson.price' is now stored as USD
   const rawAmountCents = Math.round((lesson.price || 0) * 100);
   const tutorTakeHomeCents = Math.floor(rawAmountCents * 0.85);
 
@@ -28,8 +32,8 @@ export async function queueTutorPayout(lessonId: string) {
     return { success: false, reason: 'No payout amount calculated' };
   }
 
-  // 3. 🏦 Determine Provider (from v1 lessons.js)
-  // If tutor has paypalEmail, use paypal; otherwise use stripe
+  // 3. 🏦 Determine Provider
+  // Priority to PayPal if email exists, otherwise default to Stripe Connect
   const provider = tutor.paypalEmail ? 'paypal' : 'stripe';
 
   // 4. Create the Payout record
@@ -37,7 +41,7 @@ export async function queueTutorPayout(lessonId: string) {
     lesson: lesson._id,
     tutor: lesson.tutor,
     amountCents: tutorTakeHomeCents,
-    currency: lesson.currency || 'EUR',
+    currency: 'USD', // Force USD as the payout base
     provider,
     status: 'queued',
     createdAt: new Date(),
@@ -46,7 +50,7 @@ export async function queueTutorPayout(lessonId: string) {
 
   const result = await db.collection('payouts').insertOne(payout);
 
-  console.log(`Payout ${result.insertedId} queued for Tutor ${tutor._id} (${provider})`);
+  console.log(`Payout ${result.insertedId} queued in USD for Tutor ${tutor._id} (${provider})`);
   
   return { success: true, payoutId: result.insertedId };
 }
