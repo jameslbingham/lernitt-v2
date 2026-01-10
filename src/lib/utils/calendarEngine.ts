@@ -11,10 +11,10 @@ export const CalendarEngine = {
   /**
    * Generates a final list of available slots for a tutor.
    * Priority Order Logic:
-   * 1. Date Overrides: Specific exceptions set for a single date.
-   * 2. Recurring Templates: The standard weekly 9-5 routine.
-   * 3. Booking Filter: Removes slots already occupied in the 'lessons' collection.
-   * 4. Time Zone Translation: Shifts every result into the student's local time.
+   * 1. Date Overrides: Specific exceptions set for a single date
+   * 2. Recurring Templates: The standard weekly 9-5 routine
+   * 3. Booking Filter: Removes slots already occupied in the 'lessons' collection
+   * 4. Time Zone Translation: Shifts every result into the student's local time
    */
   async getAvailableSlots(
     tutorId: string, 
