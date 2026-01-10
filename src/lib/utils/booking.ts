@@ -1,11 +1,16 @@
 // @ts-nocheck
 import clientPromise from '@/lib/database/mongodb';
 import { ObjectId } from 'mongodb';
+import { CurrencyEngine } from './currency';
 
+/**
+ * Merged Booking Manager: 
+ * Protects business rules (trials/clashes) and enforces USD as master currency.
+ */
 export async function createLessonBooking(data: {
   tutorId: string;
   studentId: string;
-  subject: string;
+  subjectId: string; // Updated to use ID for 3-layer hierarchy
   startTime: string;
   endTime: string;
   price: number;
@@ -49,15 +54,23 @@ export async function createLessonBooking(data: {
   });
   if (clash) return { success: false, reason: 'Tutor already has a lesson at this time' };
 
-  // 4. Create the Lesson
+  // 4. Currency Normalization: Convert to USD for Database Storage
+  let finalPriceUSD = data.isTrial ? 0 : data.price;
+  
+  if (!data.isTrial && data.currency !== 'USD') {
+    // If student paid in EUR/GBP, convert to USD base using our Engine
+    finalPriceUSD = await CurrencyEngine.convert(data.price, 'USD');
+  }
+
+  // 5. Create the Lesson
   const newLesson = {
     tutor: new ObjectId(data.tutorId),
     student: new ObjectId(data.studentId),
-    subject: data.subject,
+    subjectId: new ObjectId(data.subjectId), // Linked to 3-layer categories
     startTime: new Date(data.startTime),
     endTime: new Date(data.endTime),
-    price: data.isTrial ? 0 : data.price,
-    currency: data.currency || 'EUR',
+    price: finalPriceUSD, 
+    currency: 'USD', // Hardcoded platform base
     status: 'booked',
     isPaid: data.isTrial ? true : false,
     isTrial: data.isTrial,
