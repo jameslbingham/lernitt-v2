@@ -7,17 +7,26 @@ export async function POST(request: Request) {
     const client = await clientPromise;
     const db = client.db("lernitt_v2");
 
-    // This updates Bob's rates, bio, and his PayPal preference
+    // We replace the old code with this multi-field engine to support italki features
     await db.collection('users').updateOne(
       { email: 'bob_tutor@example.com' },
       { 
         $set: { 
           name: body.name,
-          hourlyRate: body.hourlyRate,
-          subjects: body.subjects,
+          // italki Feature: Professional vs. Community
+          tutorType: body.tutorType || 'community', 
+          // V1 Status: Merged from your User model
+          tutorStatus: body.tutorStatus || 'approved',
+          // Video Support: Student choice factor
+          videoUrl: body.videoUrl,   
           bio: body.bio,
-          payoutMethod: body.payoutMethod, // 'stripe' or 'paypal'
-          paypalEmail: body.paypalEmail,   // Saved for withdrawals
+          // Tiered Pricing: Array of subjects with rates & discounts
+          subjects: body.subjects,   
+          // V1 Compatibility: Sync the primary rate for search algorithms
+          hourlyRate: body.subjects[0]?.rate || 100, 
+          // Payout Flexibility: Choice between Stripe and PayPal
+          payoutMethod: body.payoutMethod,
+          paypalEmail: body.paypalEmail,
           updatedAt: new Date()
         } 
       },
@@ -26,6 +35,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (e: any) {
+    console.error("Profile Update Error:", e.message);
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
