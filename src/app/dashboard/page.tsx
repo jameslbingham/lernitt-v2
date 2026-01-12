@@ -6,7 +6,6 @@ async function getLessons() {
   try {
     const client = await clientPromise;
     const db = client.db("lernitt_v2");
-    
     const lessons = await db.collection("lessons")
       .find({})
       .sort({ date: -1 })
@@ -38,6 +37,7 @@ export default async function TutorDashboard() {
     <div className={styles.container}>
       <div className={styles.wrapper}>
         
+        {/* Dashboard Header */}
         <div className={styles.header}>
           <div style={{textAlign: 'left'}}>
             <h1 style={{fontSize: '36px', fontWeight: '900', letterSpacing: '-0.02em', margin: 0}}>Dashboard</h1>
@@ -46,6 +46,7 @@ export default async function TutorDashboard() {
           <button className={styles.withdrawBtn}>Withdraw Earnings</button>
         </div>
 
+        {/* Top Stats Row */}
         <div className={styles.statsGrid}>
           {stats.map((stat, i) => (
             <div key={i} className={styles.statCard}>
@@ -56,6 +57,7 @@ export default async function TutorDashboard() {
           ))}
         </div>
 
+        {/* Lesson Table with Recording Protocol Badges */}
         <div className={styles.tableContainer}>
           <div className={styles.tableHeader}>
             <h2 style={{fontSize: '24px', fontWeight: '900', margin: 0}}>Recent Lessons</h2>
@@ -79,24 +81,34 @@ export default async function TutorDashboard() {
                           {lesson.studentName?.charAt(0) || 'S'}
                         </div>
                         <div style={{textAlign: 'left'}}>
-                          <div style={{fontWeight: '800', fontSize: '16px'}}>{lesson.studentName}</div>
+                          <div style={{fontWeight: '800', fontSize: '16px'}}>
+                            {lesson.studentName}
+                            {lesson.recordingEnabled && (
+                              <span style={{marginLeft: '8px', fontSize: '10px', backgroundColor: '#fee2e2', color: '#ef4444', padding: '2px 6px', borderRadius: '6px', verticalAlign: 'middle'}}>REC</span>
+                            )}
+                          </div>
                           <div style={{fontSize: '11px', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase'}}>{lesson.subject || 'English Lesson'}</div>
                         </div>
                       </div>
-                      {/* ACTION BUTTON */}
-                      <button style={{
-                        backgroundColor: '#10b981',
-                        color: 'white',
-                        padding: '10px 20px',
-                        borderRadius: '12px',
-                        fontSize: '12px',
-                        fontWeight: '900',
-                        border: 'none',
-                        cursor: 'pointer',
-                        boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.2)'
-                      }}>
+                      
+                      {/* ACTIVE START BUTTON - Opens in New Tab */}
+                      <a 
+                        href={lesson.videoLink || "#"} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{
+                          backgroundColor: '#10b981',
+                          color: 'white',
+                          padding: '10px 20px',
+                          borderRadius: '12px',
+                          fontSize: '12px',
+                          fontWeight: '900',
+                          textDecoration: 'none',
+                          boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.2)'
+                        }}
+                      >
                         START LESSON
-                      </button>
+                      </a>
                     </div>
                   </td>
                   <td className={styles.td} style={{textAlign: 'center', color: '#64748b', fontWeight: '600'}}>
