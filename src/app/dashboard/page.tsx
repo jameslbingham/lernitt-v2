@@ -5,7 +5,9 @@ import clientPromise from '../../lib/mongodb';
 async function getLessons() {
   try {
     const client = await clientPromise;
+    // Standardized on 'lernitt_v2' to match your seed script
     const db = client.db("lernitt_v2");
+    
     const lessons = await db.collection("lessons")
       .find({})
       .sort({ date: -1 })
@@ -22,6 +24,7 @@ async function getLessons() {
 export default async function TutorDashboard() {
   const lessons = await getLessons();
   
+  // Real-time financial calculations
   const totalGross = lessons.reduce((sum: number, l: any) => sum + (Number(l.amount) || 0), 0);
   const totalNet = lessons.reduce((sum: number, l: any) => sum + (Number(l.netAmount) || 0), 0);
   const platformFees = totalGross - totalNet;
@@ -46,7 +49,7 @@ export default async function TutorDashboard() {
           <button className={styles.withdrawBtn}>Withdraw Earnings</button>
         </div>
 
-        {/* Top Stats Row */}
+        {/* Financial Summary Cards */}
         <div className={styles.statsGrid}>
           {stats.map((stat, i) => (
             <div key={i} className={styles.statCard}>
@@ -57,7 +60,7 @@ export default async function TutorDashboard() {
           ))}
         </div>
 
-        {/* Lesson Table with Recording Protocol Badges */}
+        {/* Recent Lessons Table */}
         <div className={styles.tableContainer}>
           <div className={styles.tableHeader}>
             <h2 style={{fontSize: '24px', fontWeight: '900', margin: 0}}>Recent Lessons</h2>
@@ -72,57 +75,70 @@ export default async function TutorDashboard() {
               </tr>
             </thead>
             <tbody>
-              {lessons.map((lesson: any) => (
-                <tr key={lesson._id}>
-                  <td className={styles.td}>
-                    <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-                      <div style={{display: 'flex', alignItems: 'center'}}>
-                        <div style={{width: '44px', height: '44px', backgroundColor: '#f1f5f9', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', color: '#64748b', marginRight: '14px'}}>
-                          {lesson.studentName?.charAt(0) || 'S'}
-                        </div>
-                        <div style={{textAlign: 'left'}}>
-                          <div style={{fontWeight: '800', fontSize: '16px'}}>
-                            {lesson.studentName}
-                            {lesson.recordingEnabled && (
-                              <span style={{marginLeft: '8px', fontSize: '10px', backgroundColor: '#fee2e2', color: '#ef4444', padding: '2px 6px', borderRadius: '6px', verticalAlign: 'middle'}}>REC</span>
-                            )}
+              {lessons.length > 0 ? (
+                lessons.map((lesson: any) => (
+                  <tr key={lesson._id}>
+                    <td className={styles.td}>
+                      <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+                        <div style={{display: 'flex', alignItems: 'center'}}>
+                          {/* Student Initials Avatar */}
+                          <div style={{width: '44px', height: '44px', backgroundColor: '#f1f5f9', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', color: '#64748b', marginRight: '14px'}}>
+                            {lesson.studentName?.charAt(0) || 'S'}
                           </div>
-                          <div style={{fontSize: '11px', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase'}}>{lesson.subject || 'English Lesson'}</div>
+                          <div style={{textAlign: 'left'}}>
+                            <div style={{fontWeight: '800', fontSize: '16px'}}>
+                              {lesson.studentName}
+                              {/* V2 Protocol REC Badge */}
+                              {lesson.recordingEnabled && (
+                                <span style={{marginLeft: '8px', fontSize: '10px', backgroundColor: '#fee2e2', color: '#ef4444', padding: '2px 6px', borderRadius: '6px', verticalAlign: 'middle'}}>REC</span>
+                              )}
+                            </div>
+                            <div style={{fontSize: '11px', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase'}}>{lesson.subject || 'English Lesson'}</div>
+                          </div>
                         </div>
+                        
+                        {/* START LESSON BUTTON - Link to Daily.co room */}
+                        <a 
+                          href={lesson.videoLink || "#"} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          style={{
+                            backgroundColor: '#10b981',
+                            color: 'white',
+                            padding: '10px 20px',
+                            borderRadius: '12px',
+                            fontSize: '12px',
+                            fontWeight: '900',
+                            textDecoration: 'none',
+                            boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.2)'
+                          }}
+                        >
+                          START LESSON
+                        </a>
                       </div>
-                      
-                      {/* ACTIVE START BUTTON - Opens in New Tab */}
-                      <a 
-                        href={lesson.videoLink || "#"} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        style={{
-                          backgroundColor: '#10b981',
-                          color: 'white',
-                          padding: '10px 20px',
-                          borderRadius: '12px',
-                          fontSize: '12px',
-                          fontWeight: '900',
-                          textDecoration: 'none',
-                          boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.2)'
-                        }}
-                      >
-                        START LESSON
-                      </a>
-                    </div>
-                  </td>
-                  <td className={styles.td} style={{textAlign: 'center', color: '#64748b', fontWeight: '600'}}>
-                    {new Date(lesson.date).toLocaleDateString()}
-                  </td>
-                  <td className={styles.td} style={{textAlign: 'right', fontWeight: '700'}}>${Number(lesson.amount).toFixed(2)}</td>
-                  <td className={styles.td} style={{textAlign: 'right'}}>
-                    <span className={styles.payoutText}>${Number(lesson.netAmount).toFixed(2)}</span>
+                    </td>
+                    <td className={styles.td} style={{textAlign: 'center', color: '#64748b', fontWeight: '600'}}>
+                      {new Date(lesson.date).toLocaleDateString()}
+                    </td>
+                    <td className={styles.td} style={{textAlign: 'right', fontWeight: '700'}}>${Number(lesson.amount).toFixed(2)}</td>
+                    <td className={styles.td} style={{textAlign: 'right'}}>
+                      <span className={styles.payoutText}>${Number(lesson.netAmount).toFixed(2)}</span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} style={{padding: '60px', textAlign: 'center', color: '#64748b'}}>
+                    <div style={{fontSize: '40px', marginBottom: '20px'}}>🔍</div>
+                    <div style={{fontWeight: '700', fontSize: '18px'}}>Connecting to database...</div>
+                    <p style={{fontSize: '14px', marginTop: '8px'}}>Refresh the page to see your live data.</p>
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
+
       </div>
     </div>
   );
