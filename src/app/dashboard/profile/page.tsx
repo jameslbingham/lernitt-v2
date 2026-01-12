@@ -3,98 +3,98 @@
 import React, { useState } from 'react';
 import styles from '../profile.module.css';
 
-export default function ProfilePage() {
+export default function AdvancedProfilePage() {
   const [profile, setProfile] = useState({
     name: 'Bob Tutor',
-    subjects: 'English, Business English, IELTS Prep',
-    hourlyRate: 100,
-    bio: 'I am a senior English tutor with over 10 years of experience helping students achieve fluency.',
-    payoutMethod: 'stripe',
-    paypalEmail: '',
+    type: 'professional', // professional or community
+    videoUrl: '', //
+    subjects: [
+      { name: 'Business English', rate: 120, discount5: 10 }, //
+      { name: 'General Conversation', rate: 80, discount5: 5 }
+    ],
+    payoutMethod: 'paypal',
+    paypalEmail: 'bob_payouts@example.com'
   });
 
   const [saving, setSaving] = useState(false);
 
-  const handleSave = async () => {
-    setSaving(true);
-    // Mimic API delay for V2 demo
-    setTimeout(() => {
-      alert(`Success! Profile updated for ${profile.name}. Payouts set to ${profile.payoutMethod.toUpperCase()}.`);
-      setSaving(false);
-    }, 1000);
-  };
-
   return (
     <div className={styles.container}>
       <div className={styles.card}>
-        <div style={{textAlign: 'left', marginBottom: '40px'}}>
-          <h1 style={{fontSize: '36px', fontWeight: '900', letterSpacing: '-0.02em', margin: 0}}>Public Profile</h1>
-          <p style={{color: '#64748b', fontSize: '18px', fontWeight: '500', marginTop: '8px'}}>Control how students see you and how you get paid.</p>
-        </div>
+        <h1 style={{fontSize: '32px', fontWeight: 900, marginBottom: '40px'}}>Marketplace Profile</h1>
 
-        <div className={styles.avatarContainer}>
-          <div className={styles.avatarCircle}>👨‍🏫</div>
-          <div style={{textAlign: 'left'}}>
-            <span className={styles.label}>Profile Picture</span>
-            <button style={{background: 'none', border: 'none', color: '#2563eb', fontWeight: '800', cursor: 'pointer', padding: 0, fontSize: '14px'}}>Upload new photo</button>
-          </div>
-        </div>
-
-        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px'}}>
-          <div style={{textAlign: 'left'}}>
-            <label className={styles.label}>Full Name</label>
-            <input className={styles.input} value={profile.name} onChange={(e) => setProfile({...profile, name: e.target.value})} />
-          </div>
-          <div style={{textAlign: 'left'}}>
-            <label className={styles.label}>Hourly Rate (USD)</label>
-            <input className={styles.input} type="number" value={profile.hourlyRate} onChange={(e) => setProfile({...profile, hourlyRate: Number(e.target.value)})} />
-          </div>
-        </div>
-
-        <div style={{textAlign: 'left'}}>
-          <label className={styles.label}>Subjects (Comma Separated)</label>
-          <input className={styles.input} value={profile.subjects} onChange={(e) => setProfile({...profile, subjects: e.target.value})} />
-        </div>
-
-        <div style={{textAlign: 'left'}}>
-          <label className={styles.label}>Professional Bio</label>
-          <textarea className={styles.textarea} rows={4} value={profile.bio} onChange={(e) => setProfile({...profile, bio: e.target.value})} />
-        </div>
-
-        <div style={{textAlign: 'left', marginTop: '20px'}}>
-          <label className={styles.label}>Withdrawal Method</label>
-          <div className={styles.methodToggle}>
+        {/* Tutor Type Selection */}
+        <div className={styles.section}>
+          <label className={styles.label}>Account Type</label>
+          <div className={styles.typeToggle}>
             <button 
-              className={`${styles.methodBtn} ${profile.payoutMethod === 'stripe' ? styles.methodActive : ''}`}
+              className={`${styles.toggleBtn} ${profile.type === 'professional' ? styles.activeToggle : ''}`}
+              onClick={() => setProfile({...profile, type: 'professional'})}
+            >
+              Professional Tutor
+            </button>
+            <button 
+              className={`${styles.toggleBtn} ${profile.type === 'community' ? styles.activeToggle : ''}`}
+              onClick={() => setProfile({...profile, type: 'community'})}
+            >
+              Community Tutor
+            </button>
+          </div>
+        </div>
+
+        {/* Video Upload Section */}
+        <div className={styles.section}>
+          <label className={styles.label}>Introduction Video</label>
+          <div className={styles.videoBox}>
+            <span style={{fontSize: '40px'}}>🎥</span>
+            <p>Click to upload your introduction video</p>
+            <span style={{fontSize: '12px'}}>MP4 or MOV preferred</span>
+          </div>
+        </div>
+
+        {/* Subject & Tiered Pricing */}
+        <div className={styles.section}>
+          <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '10px'}}>
+            <label className={styles.label}>Subjects & Tiered Pricing</label>
+            <button style={{background: 'none', border: 'none', color: '#2563eb', fontWeight: 800}}>+ Add Subject</button>
+          </div>
+          <div className={styles.priceGrid}>
+            <span className={styles.label} style={{fontSize: '10px'}}>Subject</span>
+            <span className={styles.label} style={{fontSize: '10px'}}>Hourly Rate ($)</span>
+            <span className={styles.label} style={{fontSize: '10px'}}>5-Lesson Discount (%)</span>
+          </div>
+          {profile.subjects.map((sub, idx) => (
+            <div key={idx} className={styles.priceGrid}>
+              <input className={styles.input} value={sub.name} readOnly />
+              <input className={styles.input} type="number" value={sub.rate} />
+              <input className={styles.input} type="number" value={sub.discount5} />
+            </div>
+          ))}
+        </div>
+
+        {/* Payout Preferences */}
+        <div className={styles.section}>
+          <label className={styles.label}>Withdrawal Method</label>
+          <div style={{display: 'flex', gap: '10px'}}>
+            <button 
+              className={`${styles.toggleBtn} ${profile.payoutMethod === 'stripe' ? styles.activeToggle : ''}`}
+              style={{border: '1px solid #e2e8f0'}}
               onClick={() => setProfile({...profile, payoutMethod: 'stripe'})}
             >
-              <span style={{fontSize: '24px'}}>🏦</span>
-              <span>Stripe (Bank)</span>
+              🏦 Stripe
             </button>
             <button 
-              className={`${styles.methodBtn} ${profile.payoutMethod === 'paypal' ? styles.methodActive : ''}`}
+              className={`${styles.toggleBtn} ${profile.payoutMethod === 'paypal' ? styles.activeToggle : ''}`}
+              style={{border: '1px solid #e2e8f0'}}
               onClick={() => setProfile({...profile, payoutMethod: 'paypal'})}
             >
-              <span style={{fontSize: '24px'}}>💳</span>
-              <span>PayPal</span>
+              💳 PayPal
             </button>
           </div>
         </div>
 
-        {profile.payoutMethod === 'paypal' && (
-          <div style={{textAlign: 'left'}}>
-            <label className={styles.label}>PayPal Email Address</label>
-            <input 
-              className={styles.input} 
-              placeholder="paypal-email@example.com"
-              value={profile.paypalEmail} 
-              onChange={(e) => setProfile({...profile, paypalEmail: e.target.value})} 
-            />
-          </div>
-        )}
-
-        <button className={styles.saveBtn} onClick={handleSave} disabled={saving}>
-          {saving ? 'Updating Profile...' : 'Save Profile Changes'}
+        <button className={styles.saveBtn} onClick={() => alert("Profile Saved!")}>
+          Save Professional Profile
         </button>
       </div>
     </div>
