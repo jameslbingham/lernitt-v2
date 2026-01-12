@@ -1,86 +1,80 @@
 'use client';
 
 import React from 'react';
+import styles from './dashboard.module.css';
 
 export default function TutorDashboard() {
-  // Financial data based on your successful 15% commission seed
+  // Static stats matching your $85 net payout logic
   const stats = [
-    { label: 'Available for Payout', value: '$425.00', icon: '💰', bg: 'bg-blue-50' },
-    { label: 'Lessons Completed', value: '5', icon: '✅', bg: 'bg-green-50' },
-    { label: 'Net Hourly Rate', value: '$85.00', icon: '💵', bg: 'bg-purple-50' },
-    { label: 'Platform Fees (15%)', value: '$75.00', icon: '📉', bg: 'bg-orange-50' },
+    { label: 'Available for Payout', value: '$425.00', icon: '💰' },
+    { label: 'Lessons Completed', value: '5', icon: '✅' },
+    { label: 'Net Hourly Rate', value: '$85.00', icon: '💵' },
+    { label: 'Platform Fees (15%)', value: '$75.00', icon: '📉' },
   ];
 
   return (
-    <div className="min-h-screen bg-[#FBFBFE] p-6 md:p-12 text-slate-900 font-sans">
-      <div className="max-w-6xl mx-auto text-left">
+    <div className={styles.container}>
+      <div className={styles.wrapper}>
         
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
+        <div className={styles.header}>
           <div>
-            <h1 className="text-4xl font-black tracking-tight text-slate-900">Dashboard</h1>
-            <p className="text-slate-500 font-medium mt-2 text-lg">Lernitt V2 Engine • Bob Tutor Account</p>
+            <h1 style={{fontSize: '36px', fontWeight: '900', letterSpacing: '-0.02em'}}>Dashboard</h1>
+            <p style={{color: '#64748b', fontSize: '18px', fontWeight: '500'}}>Lernitt V2 Engine • Bob Tutor Account</p>
           </div>
-          <button className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shadow-lg hover:bg-blue-700 transition-all">
-            Withdraw Earnings
-          </button>
+          <button className={styles.withdrawBtn}>Withdraw Earnings</button>
         </div>
 
-        {/* Overview Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-          {stats.map((stat, index) => (
-            <div key={index} className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm">
-              <div className={`w-14 h-14 rounded-2xl ${stat.bg} flex items-center justify-center mb-6 text-2xl`}>
-                {stat.icon}
-              </div>
-              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">{stat.label}</p>
-              <h3 className="text-3xl font-black text-slate-900">{stat.value}</h3>
+        {/* Financial Cards Grid */}
+        <div className={styles.statsGrid}>
+          {stats.map((stat, i) => (
+            <div key={i} className={styles.statCard}>
+              <div style={{fontSize: '28px', marginBottom: '20px'}}>{stat.icon}</div>
+              <p style={{fontSize: '12px', color: '#64748b', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px'}}>{stat.label}</p>
+              <h3 style={{fontSize: '32px', fontWeight: '900', margin: '10px 0 0 0'}}>{stat.value}</h3>
             </div>
           ))}
         </div>
 
-        {/* Transaction Table */}
-        <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
-          <div className="p-10 border-b border-slate-50 flex justify-between items-center">
-            <h2 className="text-2xl font-black text-slate-900">Recent Lessons</h2>
-            <button className="text-blue-600 font-bold hover:underline">
-              Full History →
-            </button>
+        {/* Lesson History Table */}
+        <div className={styles.tableContainer}>
+          <div className={styles.tableHeader}>
+            <h2 style={{fontSize: '24px', fontWeight: '900'}}>Recent Lessons</h2>
           </div>
-          
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="text-slate-400 text-[10px] font-black uppercase tracking-widest bg-slate-50/50">
-                  <th className="px-8 py-6">Student</th>
-                  <th className="px-8 py-6 text-center">Date</th>
-                  <th className="px-8 py-6 text-right">Gross</th>
-                  <th className="px-8 py-6 text-right">Fee (15%)</th>
-                  <th className="px-8 py-6 text-right text-blue-600">Your Payout</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {[...Array(5)].map((_, i) => (
-                  <tr key={i} className="hover:bg-blue-50/10 transition-colors">
-                    <td className="px-8 py-8">
-                      <div className="flex items-center">
-                        <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-500 font-black mr-4 uppercase">AS</div>
-                        <div>
-                          <p className="font-black text-slate-900">Alice Student</p>
-                          <p className="text-slate-400 text-xs font-bold uppercase">1-on-1 Lesson</p>
-                        </div>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th className={styles.th}>Student</th>
+                <th className={styles.th} style={{textAlign: 'center'}}>Date</th>
+                <th className={styles.th} style={{textAlign: 'right'}}>Gross Price</th>
+                <th className={styles.th} style={{textAlign: 'right'}}>Lernitt Fee</th>
+                <th className={styles.th} style={{textAlign: 'right'}}>Your Payout</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[1, 2, 3, 4, 5].map((item) => (
+                <tr key={item}>
+                  <td className={styles.td}>
+                    <div style={{display: 'flex', alignItems: 'center'}}>
+                      <div style={{width: '40px', height: '40px', backgroundColor: '#f1f5f9', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', color: '#64748b', marginRight: '12px'}}>AS</div>
+                      <div>
+                        <div style={{fontWeight: '800'}}>Alice Student</div>
+                        <div style={{fontSize: '11px', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase'}}>1-on-1 Lesson</div>
                       </div>
-                    </td>
-                    <td className="px-8 py-8 text-center text-slate-500 font-bold text-sm">Jan {11 - i}, 2026</td>
-                    <td className="px-8 py-8 text-right font-bold text-slate-900">$100.00</td>
-                    <td className="px-8 py-8 text-right text-orange-500 font-black text-sm">-$15.00</td>
-                    <td className="px-8 py-8 text-right font-black text-green-600 text-xl tracking-tight">$85.00</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  </td>
+                  <td className={styles.td} style={{textAlign: 'center', color: '#64748b', fontWeight: '600'}}>Jan {11 - item}, 2026</td>
+                  <td className={styles.td} style={{textAlign: 'right', fontWeight: '700'}}>$100.00</td>
+                  <td className={styles.td} style={{textAlign: 'right', color: '#f97316', fontWeight: '700'}}>-$15.00</td>
+                  <td className={styles.td} style={{textAlign: 'right'}}>
+                    <span className={styles.payoutText}>$85.00</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
+
       </div>
     </div>
   );
