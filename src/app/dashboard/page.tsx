@@ -1,12 +1,12 @@
 import React from 'react';
 import styles from './dashboard.module.css';
-import clientPromise from '@/lib/mongodb';
+import clientPromise from '../../lib/mongodb';
 
 async function getLessons() {
   try {
     const client = await clientPromise;
     const db = client.db("lernitt-v2");
-    // Fetch the 5 lessons you seeded
+    // This fetches the actual lessons you successfully seeded
     const lessons = await db.collection("lessons")
       .find({})
       .sort({ date: -1 })
@@ -15,7 +15,7 @@ async function getLessons() {
     
     return JSON.parse(JSON.stringify(lessons));
   } catch (e) {
-    console.error(e);
+    console.error("Database Error:", e);
     return [];
   }
 }
@@ -23,16 +23,16 @@ async function getLessons() {
 export default async function TutorDashboard() {
   const lessons = await getLessons();
   
-  // Calculate real totals based on the database data
-  const totalGross = lessons.reduce((sum: number, l: any) => sum + (l.price || 0), 0);
-  const totalNet = lessons.reduce((sum: number, l: any) => sum + (l.netPayout || 0), 0);
+  // Real-time financial calculations
+  const totalGross = lessons.reduce((sum: number, l: any) => sum + (Number(l.price) || 0), 0);
+  const totalNet = lessons.reduce((sum: number, l: any) => sum + (Number(l.netPayout) || 0), 0);
   const platformFees = totalGross - totalNet;
 
   const stats = [
-    { label: 'Available for Payout', value: `$${totalNet.toFixed(2)}`, icon: '💰', bg: 'bg-blue-50' },
-    { label: 'Lessons Completed', value: lessons.length.toString(), icon: '✅', bg: 'bg-green-50' },
-    { label: 'Avg. Net Payout', value: `$${(totalNet / (lessons.length || 1)).toFixed(2)}`, icon: '💵', bg: 'bg-purple-50' },
-    { label: 'Platform Fees (15%)', value: `$${platformFees.toFixed(2)}`, icon: '📉', bg: 'bg-orange-50' },
+    { label: 'Available for Payout', value: `$${totalNet.toFixed(2)}`, icon: '💰' },
+    { label: 'Lessons Completed', value: lessons.length.toString(), icon: '✅' },
+    { label: 'Net Hourly Rate', value: `$${(totalNet / (lessons.length || 1)).toFixed(2)}`, icon: '💵' },
+    { label: 'Platform Fees (15%)', value: `$${platformFees.toFixed(2)}`, icon: '📉' },
   ];
 
   return (
@@ -72,31 +72,39 @@ export default async function TutorDashboard() {
               </tr>
             </thead>
             <tbody>
-              {lessons.map((lesson: any) => (
-                <tr key={lesson._id}>
-                  <td className={styles.td}>
-                    <div style={{display: 'flex', alignItems: 'center'}}>
-                      <div style={{width: '40px', height: '40px', backgroundColor: '#f1f5f9', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', color: '#64748b', marginRight: '12px'}}>
-                        {lesson.studentName?.charAt(0) || 'S'}
+              {lessons.length > 0 ? (
+                lessons.map((lesson: any) => (
+                  <tr key={lesson._id}>
+                    <td className={styles.td}>
+                      <div style={{display: 'flex', alignItems: 'center'}}>
+                        <div style={{width: '40px', height: '40px', backgroundColor: '#f1f5f9', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', color: '#64748b', marginRight: '12px'}}>
+                          {lesson.studentName?.charAt(0) || 'S'}
+                        </div>
+                        <div>
+                          <div style={{fontWeight: '800'}}>{lesson.studentName}</div>
+                          <div style={{fontSize: '11px', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase'}}>{lesson.subject}</div>
+                        </div>
                       </div>
-                      <div>
-                        <div style={{fontWeight: '800'}}>{lesson.studentName || 'Alice Student'}</div>
-                        <div style={{fontSize: '11px', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase'}}>{lesson.subject || 'Lesson'}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className={styles.td} style={{textAlign: 'center', color: '#64748b', fontWeight: '600'}}>
-                    {new Date(lesson.date).toLocaleDateString()}
-                  </td>
-                  <td className={styles.td} style={{textAlign: 'right', fontWeight: '700'}}>${lesson.price?.toFixed(2)}</td>
-                  <td className={styles.td} style={{textAlign: 'right', color: '#f97316', fontWeight: '700'}}>
-                    -${(lesson.price - lesson.netPayout).toFixed(2)}
-                  </td>
-                  <td className={styles.td} style={{textAlign: 'right'}}>
-                    <span className={styles.payoutText}>${lesson.netPayout?.toFixed(2)}</span>
+                    </td>
+                    <td className={styles.td} style={{textAlign: 'center', color: '#64748b', fontWeight: '600'}}>
+                      {new Date(lesson.date).toLocaleDateString()}
+                    </td>
+                    <td className={styles.td} style={{textAlign: 'right', fontWeight: '700'}}>${lesson.price?.toFixed(2)}</td>
+                    <td className={styles.td} style={{textAlign: 'right', color: '#f97316', fontWeight: '700'}}>
+                      -${(lesson.price - lesson.netPayout).toFixed(2)}
+                    </td>
+                    <td className={styles.td} style={{textAlign: 'right'}}>
+                      <span className={styles.payoutText}>${lesson.netPayout?.toFixed(2)}</span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} style={{padding: '40px', textAlign: 'center', color: '#64748b'}}>
+                    No lessons found in database. Run seed_v2.mjs to add some!
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
