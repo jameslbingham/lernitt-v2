@@ -1,20 +1,18 @@
 import { MongoClient, ObjectId } from 'mongodb';
 
-// This is the "Master Key" we verified is working on your machine
+// Master Key for your MongoDB instance
 const uri = "mongodb+srv://jameslawrencebingham:Yg2IgykoKdUa3fuJ@lernitt0.okxejmb.mongodb.net/?appName=lernitt0";
 
 async function seed() {
-  console.log("🌱 STARTING FORCED SEED...");
+  console.log("🌱 STARTING COMPLETE V2 PROTOCOL SEED...");
   const client = new MongoClient(uri);
 
   try {
     await client.connect();
-    const db = client.db();
+    const db = client.db("lernitt_v2");
     
-    // Hardcoded 15% commission to match your business model
-    const commissionPct = 15; 
+    const commissionPct = 15; // Your 15% platform fee
 
-    // 1. Create/Update a Test Tutor (Bob)
     const tutorId = new ObjectId();
     await db.collection('users').updateOne(
       { email: 'bob_tutor@example.com' },
@@ -28,31 +26,36 @@ async function seed() {
       { upsert: true }
     );
 
-    // 2. Clear old test lessons to keep things clean
+    // Clear old test data
     await db.collection('lessons').deleteMany({ studentName: 'Alice Student (V2 Test)' });
 
-    // 3. Create 5 Test Lessons with 15% logic
+    // Create 5 Lessons with Video Links and Recording Protocols
     const lessons = Array.from({ length: 5 }).map((_, i) => {
-      const amount = 100; // $100 Lesson
-      const commission = amount * (commissionPct / 100); // $15
-      const netAmount = amount - commission; // $85
+      const amount = 100;
+      const commission = amount * (commissionPct / 100);
+      const netAmount = amount - commission;
       
       return {
         tutorId: tutorId,
         studentName: 'Alice Student (V2 Test)',
+        subject: 'English Lesson',
         amount: amount,
         commission: commission,
         netAmount: netAmount,
         status: 'completed',
-        date: new Date(Date.now() - i * 86400000)
+        date: new Date(Date.now() - i * 86400000),
+        videoLink: "https://lernitt.daily.co/demo-room", // Your Daily.co room
+        // V2 Recording Protocol Fields
+        recordingEnabled: true,
+        recordingStatus: i === 0 ? 'processing' : 'stored',
+        expiryDate: new Date(Date.now() + (30 - i) * 86400000) // 30-day auto-delete logic
       };
     });
 
     await db.collection('lessons').insertMany(lessons);
     
     console.log("------------------------------------------");
-    console.log("✅ SUCCESS: 5 LESSONS SEEDED!");
-    console.log(`📊 MATH CHECK: $100 Lesson -> $15 Fee -> $85 Net`);
+    console.log("✅ SUCCESS: 5 LESSONS SEEDED WITH RECORDING PROTOCOLS!");
     console.log("------------------------------------------");
     
     await client.close();
