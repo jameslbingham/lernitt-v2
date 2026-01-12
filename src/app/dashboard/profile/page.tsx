@@ -1,113 +1,92 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styles from '../profile.module.css';
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState({
     name: 'Bob Tutor',
-    email: 'bob_tutor@example.com',
-    subjects: 'English, Business English',
+    subjects: 'English, Business English, IELTS Prep',
     hourlyRate: 100,
-    bio: 'Senior English tutor with 10 years experience.',
+    bio: 'I am a senior English tutor with over 10 years of experience helping students achieve fluency.',
     payoutMethod: 'stripe',
     paypalEmail: '',
   });
 
   const [saving, setSaving] = useState(false);
 
-  // Auto-load Bob's existing settings from MongoDB on mount
-  useEffect(() => {
-    async function loadProfile() {
-      const res = await fetch('/api/profile_data'); // We'll create this next
-      if (res.ok) {
-        const data = await res.json();
-        setProfile(prev => ({ ...prev, ...data }));
-      }
-    }
-    loadProfile();
-  }, []);
-
   const handleSave = async () => {
     setSaving(true);
-    try {
-      const res = await fetch('/api/profile_update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(profile),
-      });
-      if (res.ok) alert("Profile Updated Successfully!");
-    } catch (e) {
-      alert("Error saving profile.");
-    } finally {
+    // Mimic API delay for V2 demo
+    setTimeout(() => {
+      alert(`Success! Profile updated for ${profile.name}. Payouts set to ${profile.payoutMethod.toUpperCase()}.`);
       setSaving(false);
-    }
+    }, 1000);
   };
 
   return (
     <div className={styles.container}>
       <div className={styles.card}>
-        <h1 style={{fontSize: '32px', fontWeight: 900, marginBottom: '8px'}}>Tutor Profile</h1>
-        <p style={{color: '#64748b', marginBottom: '40px'}}>Manage your teaching details and payout methods.</p>
+        <div style={{textAlign: 'left', marginBottom: '40px'}}>
+          <h1 style={{fontSize: '36px', fontWeight: '900', letterSpacing: '-0.02em', margin: 0}}>Public Profile</h1>
+          <p style={{color: '#64748b', fontSize: '18px', fontWeight: '500', marginTop: '8px'}}>Control how students see you and how you get paid.</p>
+        </div>
 
-        {/* Avatar Section */}
         <div className={styles.avatarContainer}>
           <div className={styles.avatarCircle}>👨‍🏫</div>
-          <div>
-            <span className={styles.label}>Profile Image</span>
-            <button style={{color: '#2563eb', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer'}}>Upload New Photo</button>
+          <div style={{textAlign: 'left'}}>
+            <span className={styles.label}>Profile Picture</span>
+            <button style={{background: 'none', border: 'none', color: '#2563eb', fontWeight: '800', cursor: 'pointer', padding: 0, fontSize: '14px'}}>Upload new photo</button>
           </div>
         </div>
 
-        {/* Basic Info */}
-        <div className={styles.row}>
-          <div className={styles.section}>
+        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px'}}>
+          <div style={{textAlign: 'left'}}>
             <label className={styles.label}>Full Name</label>
             <input className={styles.input} value={profile.name} onChange={(e) => setProfile({...profile, name: e.target.value})} />
           </div>
-          <div className={styles.section}>
+          <div style={{textAlign: 'left'}}>
             <label className={styles.label}>Hourly Rate (USD)</label>
             <input className={styles.input} type="number" value={profile.hourlyRate} onChange={(e) => setProfile({...profile, hourlyRate: Number(e.target.value)})} />
           </div>
         </div>
 
-        <div className={styles.section}>
+        <div style={{textAlign: 'left'}}>
           <label className={styles.label}>Subjects (Comma Separated)</label>
           <input className={styles.input} value={profile.subjects} onChange={(e) => setProfile({...profile, subjects: e.target.value})} />
         </div>
 
-        <div className={styles.section}>
+        <div style={{textAlign: 'left'}}>
           <label className={styles.label}>Professional Bio</label>
           <textarea className={styles.textarea} rows={4} value={profile.bio} onChange={(e) => setProfile({...profile, bio: e.target.value})} />
         </div>
 
-        <hr style={{border: 'none', borderTop: '1px solid #f1f5f9', margin: '20px 0 40px 0'}} />
-
-        {/* Payout Method */}
-        <div className={styles.section}>
+        <div style={{textAlign: 'left', marginTop: '20px'}}>
           <label className={styles.label}>Withdrawal Method</label>
           <div className={styles.methodToggle}>
             <button 
               className={`${styles.methodBtn} ${profile.payoutMethod === 'stripe' ? styles.methodActive : ''}`}
               onClick={() => setProfile({...profile, payoutMethod: 'stripe'})}
             >
-              🏦 Stripe (Bank)
+              <span style={{fontSize: '24px'}}>🏦</span>
+              <span>Stripe (Bank)</span>
             </button>
             <button 
               className={`${styles.methodBtn} ${profile.payoutMethod === 'paypal' ? styles.methodActive : ''}`}
               onClick={() => setProfile({...profile, payoutMethod: 'paypal'})}
             >
-              💳 PayPal
+              <span style={{fontSize: '24px'}}>💳</span>
+              <span>PayPal</span>
             </button>
           </div>
         </div>
 
         {profile.payoutMethod === 'paypal' && (
-          <div className={styles.section}>
+          <div style={{textAlign: 'left'}}>
             <label className={styles.label}>PayPal Email Address</label>
             <input 
               className={styles.input} 
-              placeholder="your-paypal@example.com"
+              placeholder="paypal-email@example.com"
               value={profile.paypalEmail} 
               onChange={(e) => setProfile({...profile, paypalEmail: e.target.value})} 
             />
@@ -115,7 +94,7 @@ export default function ProfilePage() {
         )}
 
         <button className={styles.saveBtn} onClick={handleSave} disabled={saving}>
-          {saving ? 'Saving...' : 'Save Profile Changes'}
+          {saving ? 'Updating Profile...' : 'Save Profile Changes'}
         </button>
       </div>
     </div>
