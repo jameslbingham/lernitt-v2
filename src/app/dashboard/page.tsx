@@ -5,8 +5,8 @@ import clientPromise from '../../lib/mongodb';
 async function getLessons() {
   try {
     const client = await clientPromise;
-    // Connects to the default database used in your seed script
-    const db = client.db("lernitt0");
+    // We are standardizing on 'lernitt_v2'
+    const db = client.db("lernitt_v2");
     
     const lessons = await db.collection("lessons")
       .find({})
@@ -24,7 +24,7 @@ async function getLessons() {
 export default async function TutorDashboard() {
   const lessons = await getLessons();
   
-  // Real-time financial calculations matching seed names: 'amount' and 'netAmount'
+  // Real-time financial calculations using seed names: 'amount' and 'netAmount'
   const totalGross = lessons.reduce((sum: number, l: any) => sum + (Number(l.amount) || 0), 0);
   const totalNet = lessons.reduce((sum: number, l: any) => sum + (Number(l.netAmount) || 0), 0);
   const platformFees = totalGross - totalNet;
@@ -103,7 +103,7 @@ export default async function TutorDashboard() {
                 <tr>
                   <td colSpan={5} style={{padding: '60px', textAlign: 'center', color: '#64748b'}}>
                     <div style={{fontSize: '40px', marginBottom: '20px'}}>🔍</div>
-                    <div style={{fontWeight: '700', fontSize: '18px'}}>No live data found.</div>
+                    <div style={{fontWeight: '700', fontSize: '18px'}}>No live data found in 'lernitt_v2'.</div>
                     <p style={{fontSize: '14px', marginTop: '8px'}}>Please run <code>node seed_v2.mjs</code> to add data.</p>
                   </td>
                 </tr>
