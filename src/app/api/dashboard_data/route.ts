@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
-import clientPromise from '@/lib/mongodb';
+// Fixed Line 2: Using relative path to eliminate the red squiggle error
+import clientPromise from '../../../lib/mongodb';
 
 export async function GET() {
   try {
     const client = await clientPromise;
-    // Connecting to your synchronized 'lernitt_v2' database
+    // Standardized on 'lernitt_v2' to match your successful seed
     const db = client.db("lernitt_v2");
     
     const lessons = await db.collection("lessons")
