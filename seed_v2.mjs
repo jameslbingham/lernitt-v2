@@ -9,9 +9,12 @@ async function seed() {
 
   try {
     await client.connect();
+    
+    // Standardizing on 'lernitt_v2' to match your dashboard page
     const db = client.db("lernitt_v2");
     
-    const commissionPct = 15; // Your 15% platform fee
+    // Hardcoded 15% platform fee matching your business model
+    const commissionPct = 15; 
 
     const tutorId = new ObjectId();
     await db.collection('users').updateOne(
@@ -44,7 +47,7 @@ async function seed() {
         netAmount: netAmount,
         status: 'completed',
         date: new Date(Date.now() - i * 86400000),
-        videoLink: "https://lernitt.daily.co/demo-room", // Your Daily.co room
+        videoLink: "https://lernitt.daily.co/demo-room", // Your Daily.co video core
         // V2 Recording Protocol Fields
         recordingEnabled: true,
         recordingStatus: i === 0 ? 'processing' : 'stored',
