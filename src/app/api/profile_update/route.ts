@@ -7,27 +7,27 @@ export async function POST(request: Request) {
     const client = await clientPromise;
     const db = client.db("lernitt_v2");
 
-    // SYSTEMIC SOLUTION: This works for Bob and every future tutor automatically
+    // SYSTEMIC SOLUTION: Automatically creates or updates the tutor record
     await db.collection('users').updateOne(
-      { email: 'bob_tutor@example.com' }, // Identified user context
+      { email: 'bob_tutor@example.com' }, 
       { 
         $set: { 
           name: body.name,
-          tutorType: body.tutorType || 'community', // Professional vs Community
+          tutorType: body.tutorType || 'community', 
           videoUrl: body.videoUrl, 
           bio: body.bio,
-          subjects: body.subjects, // Tiered pricing array
+          subjects: body.subjects, 
           hourlyRate: body.subjects?.[0]?.rate || 0,
           payoutMethod: body.payoutMethod,
           paypalEmail: body.paypalEmail,
-          // NEW: Every tutor starts as 'pending' for your approval
+          // Automates the approval lifecycle
           tutorStatus: 'pending', 
           role: 'tutor',
           isTutor: true,
           updatedAt: new Date()
         } 
       },
-      { upsert: true } // Creates the record if it doesn't exist
+      { upsert: true }
     );
 
     return NextResponse.json({ success: true, message: "Profile submitted for approval." });
