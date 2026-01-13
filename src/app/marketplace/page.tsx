@@ -1,15 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import styles from '../marketplace.module.css';
+// Fixed path: now looks in the same folder for the CSS file
+import styles from './marketplace.module.css';
 
 export default function StudentMarketplace() {
   const [tutors, setTutors] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState('all'); // all, professional, community
+  const [filterType, setFilterType] = useState('all'); 
   const [loading, setLoading] = useState(true);
 
-  // Load tutors who are "Approved" (V1 Logic)
   useEffect(() => {
     async function loadMarketplace() {
       try {
@@ -17,7 +17,7 @@ export default function StudentMarketplace() {
         const data = await res.json();
         setTutors(data.tutors || []);
       } catch (e) {
-        console.error("Marketplace Load Error");
+        console.error("Marketplace API Error");
       } finally {
         setLoading(false);
       }
@@ -25,30 +25,27 @@ export default function StudentMarketplace() {
     loadMarketplace();
   }, []);
 
-  // AI-Style Filtering: Searches Name, Bio, and Subjects
   const filteredTutors = tutors.filter(t => {
     const matchesSearch = 
       t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.bio?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.subjects?.some((s: any) => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
     
     const matchesType = filterType === 'all' || t.tutorType === filterType;
     return matchesSearch && matchesType;
   });
 
-  if (loading) return <div className={styles.container}>Loading Tutors...</div>;
+  if (loading) return <div className={styles.container}>Loading Marketplace...</div>;
 
   return (
     <div className={styles.container}>
       <div className={styles.searchHeader}>
-        <h1 style={{fontSize: '42px', fontWeight: 900, letterSpacing: '-0.02em', margin: 0}}>Find Your Teacher</h1>
-        <p style={{color: '#64748b', fontSize: '18px', marginTop: '10px'}}>Search by subject, level, or professional status.</p>
+        <h1 style={{fontSize: '48px', fontWeight: 900, letterSpacing: '-0.04em', margin: 0}}>Find a Teacher</h1>
+        <p style={{color: '#64748b', fontSize: '20px', marginTop: '12px', fontWeight: '500'}}>Choose between Professional and Community tutors.</p>
 
-        {/* Search & Filter Bar */}
         <div className={styles.filterBar}>
           <input 
             className={styles.filterInput} 
-            placeholder="What do you want to learn? (e.g. Business English)" 
+            placeholder="Search by subject (e.g. Business English)..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -58,9 +55,9 @@ export default function StudentMarketplace() {
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
           >
-            <option value="all">All Tutor Types</option>
-            <option value="professional">Professional Tutors</option>
-            <option value="community">Community Tutors</option>
+            <option value="all">All Tutors</option>
+            <option value="professional">Professional Tutors 💎</option>
+            <option value="community">Community Tutors 🏠</option>
           </select>
         </div>
       </div>
@@ -68,13 +65,10 @@ export default function StudentMarketplace() {
       <div className={styles.grid}>
         {filteredTutors.map((tutor: any) => (
           <div key={tutor._id} className={styles.tutorCard}>
-            <div style={{display: 'flex', gap: '20px', marginBottom: '20px'}}>
+            <div style={{display: 'flex', gap: '20px', alignItems: 'flex-start'}}>
               <div className={styles.avatar}>👨‍🏫</div>
               <div style={{textAlign: 'left'}}>
-                <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                  <h2 style={{fontSize: '22px', fontWeight: 900, margin: 0}}>{tutor.name}</h2>
-                  {tutor.tutorType === 'professional' && <span title="Verified Professional" style={{fontSize: '18px'}}>💎</span>}
-                </div>
+                <h2 style={{fontSize: '24px', fontWeight: 900, margin: 0}}>{tutor.name}</h2>
                 <span className={styles.badge} style={{
                   backgroundColor: tutor.tutorType === 'professional' ? '#eff6ff' : '#f8fafc',
                   color: tutor.tutorType === 'professional' ? '#2563eb' : '#64748b'
@@ -84,48 +78,26 @@ export default function StudentMarketplace() {
               </div>
             </div>
 
-            {/* Video Preview Badge */}
-            {tutor.videoUrl && (
-              <div style={{backgroundColor: '#000', borderRadius: '12px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', cursor: 'pointer'}}>
-                <span style={{color: 'white', fontWeight: 800}}>▶ Watch Intro Video</span>
-              </div>
-            )}
-
-            <p style={{fontSize: '14px', color: '#475569', height: '60px', overflow: 'hidden', marginBottom: '20px'}}>
-              {tutor.bio || "No bio provided."}
+            <p style={{fontSize: '15px', color: '#475569', lineHeight: '1.6', margin: '20px 0', height: '72px', overflow: 'hidden'}}>
+              {tutor.bio || "Hello! I am a dedicated tutor here to help you achieve your learning goals."}
             </p>
 
-            {/* Tiered Pricing List */}
-            <div style={{borderTop: '1px solid #f1f5f9', paddingTop: '15px', marginBottom: '20px'}}>
-              <p className={styles.label} style={{fontSize: '10px'}}>Lesson Rates</p>
+            <div style={{marginBottom: '30px', borderTop: '1px solid #f1f5f9', paddingTop: '15px'}}>
+              <p style={{fontSize: '11px', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '10px'}}>Lesson Rates</p>
               {tutor.subjects?.map((s: any, i: number) => (
-                <div key={i} style={{display: 'flex', justifyContent: 'space-between', marginBottom: '6px'}}>
-                  <span style={{fontSize: '13px', fontWeight: 700}}>{s.name}</span>
+                <div key={i} className={styles.priceItem}>
+                  <span style={{fontWeight: 700, fontSize: '14px'}}>{s.name}</span>
                   <div style={{textAlign: 'right'}}>
-                    <span style={{fontSize: '14px', fontWeight: 900}}>${s.rate}</span>
-                    {s.discount5 > 0 && <span style={{fontSize: '10px', color: '#16a34a', marginLeft: '5px'}}>-{s.discount5}% for 5</span>}
+                    <span style={{fontWeight: 900, fontSize: '15px'}}>${s.rate}</span>
+                    {s.discount5 > 0 && <span style={{fontSize: '11px', color: '#16a34a', marginLeft: '6px'}}>(-{s.discount5}%)</span>}
                   </div>
                 </div>
               ))}
             </div>
 
-            <div style={{display: 'flex', gap: '10px'}}>
-              {/* Contact Tutor Button (V1 Messaging Hook) */}
-              <button 
-                className={styles.bookBtn} 
-                style={{backgroundColor: '#f1f5f9', color: '#0f172a', flex: 1}}
-                onClick={() => alert(`Opening chat with ${tutor.name}...`)}
-              >
-                Message
-              </button>
-              <button 
-                className={styles.bookBtn} 
-                style={{flex: 2}}
-                onClick={() => alert("Opening SlotPicker...")}
-              >
-                Book Lesson
-              </button>
-            </div>
+            <button className={styles.bookBtn} onClick={() => alert("Booking calendar opening...")}>
+              Book a Lesson
+            </button>
           </div>
         ))}
       </div>
