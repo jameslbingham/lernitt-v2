@@ -6,7 +6,7 @@ export async function GET() {
     const client = await clientPromise;
     const db = client.db("lernitt_v2");
     
-    // Professional Filter: Fetching all tutors regardless of status for verification
+    // Professional Logic: Find all tutors to display on the marketplace
     const tutors = await db.collection('users')
       .find({ role: 'tutor' })
       .toArray();
