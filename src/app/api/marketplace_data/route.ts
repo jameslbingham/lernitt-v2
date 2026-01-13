@@ -6,12 +6,9 @@ export async function GET() {
     const client = await clientPromise;
     const db = client.db("lernitt_v2");
     
-    // Only show approved tutors in the marketplace
+    // Professional Filter: Fetching all tutors regardless of status for verification
     const tutors = await db.collection('users')
-      .find({ 
-        role: 'tutor', 
-        tutorStatus: 'approved' 
-      })
+      .find({ role: 'tutor' })
       .toArray();
     
     return NextResponse.json({ tutors });
