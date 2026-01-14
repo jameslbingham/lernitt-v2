@@ -4,9 +4,13 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 export interface ICategory extends Document {
   name: string;
   slug: string;
-  level: 'topic' | 'subject' | 'subcategory'; // The three layers you requested
-  parent?: mongoose.Types.ObjectId; // Subjects point to Topics; Sub-categories point to Subjects
+  level: 'topic' | 'subject' | 'subcategory'; // The three layers preserved
+  parent?: mongoose.Types.ObjectId; // Hierarchical links preserved
   active: boolean;
+  // Merged: Added for sophisticated curriculum planning
+  description?: string; 
+  updatedAt: Date;
+  createdAt: Date;
 }
 
 const CategorySchema: Schema = new Schema(
@@ -24,13 +28,16 @@ const CategorySchema: Schema = new Schema(
       default: null 
     },
     active: { type: Boolean, default: true },
+    // Merged: Sophisticated curriculum details
+    description: { type: String, trim: true },
   },
   { timestamps: true }
 );
 
-// Indexing for fast lookups by level and parent
+// Preserved and optimized indexes for fast lookups
 CategorySchema.index({ level: 1 });
 CategorySchema.index({ parent: 1 });
+CategorySchema.index({ slug: 1 });
 
 const Category: Model<ICategory> = mongoose.models.Category || mongoose.model<ICategory>('Category', CategorySchema);
 export default Category;
