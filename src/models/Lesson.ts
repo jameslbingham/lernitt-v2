@@ -7,7 +7,7 @@ export interface ILesson extends Document {
   durationMinutes: number;
   status: 'scheduled' | 'completed' | 'cancelled';
   price: number;
-  // Sophisticated Tracking Fields for Curriculum Planning
+  // Sophisticated tracking for curriculum planning
   curriculumUnit?: string;
   progressNote?: string;
   studentRating?: number;
