@@ -9,13 +9,14 @@ export interface IUser extends Document {
   isTutor: boolean;
   tutorStatus: 'none' | 'pending' | 'approved' | 'rejected';
   bio?: string;
+  // References the Category model for the 3-layer hierarchy (Topic > Subject > Subcategory)
   subjectIds: mongoose.Types.ObjectId[]; 
   hourlyRate: number; 
   preferredCurrency: string;
   avatar?: string;
   stripeAccountId?: string;
   paypalEmail?: string;
-  // This enables the choice between Stripe and PayPal for payouts
+  // Election for all tutors to choose their preferred payout method
   withdrawalMethod: 'Stripe' | 'PayPal'; 
   payoutsEnabled: boolean;
   isAdmin: boolean;
@@ -23,6 +24,8 @@ export interface IUser extends Document {
   timezone: string; 
   totalEarnings: number;
   totalLessons: number;
+  // Added for sophisticated student retention analysis
+  studentRetentionRate?: number; 
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,13 +43,18 @@ const UserSchema: Schema = new Schema(
       default: 'none' 
     },
     bio: { type: String },
+    // Linked to the hierarchical Category model (Topics, Subjects, Subcategories)
     subjectIds: [{ type: Schema.Types.ObjectId, ref: 'Category' }],
     hourlyRate: { type: Number, default: 0 },
     preferredCurrency: { type: String, default: 'USD' },
     avatar: { type: String },
     stripeAccountId: { type: String },
     paypalEmail: { type: String },
-    // Withdrawal election: Defaulting to Stripe, but Bob can elect PayPal
+    /**
+     * Withdrawal Method Election:
+     * Tutors may elect to withdraw their funds into their PayPal account 
+     * if that is what they have placed in their profile.
+     */
     withdrawalMethod: { type: String, enum: ['Stripe', 'PayPal'], default: 'Stripe' },
     payoutsEnabled: { type: Boolean, default: false },
     isAdmin: { type: Boolean, default: false },
@@ -54,14 +62,18 @@ const UserSchema: Schema = new Schema(
     timezone: { type: String, default: 'UTC' },
     totalEarnings: { type: Number, default: 0 },
     totalLessons: { type: Number, default: 0 },
+    // For storing pre-calculated analytics metrics to improve dashboard performance
+    studentRetentionRate: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
 
+// High-performance indexes for fast marketplace and dashboard filtering
 UserSchema.index({ email: 1 });
 UserSchema.index({ role: 1 });
 UserSchema.index({ tutorStatus: 1 });
 UserSchema.index({ subjectIds: 1 });
+UserSchema.index({ withdrawalMethod: 1 });
 
 const User: Model<IUser> = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
 export default User;
