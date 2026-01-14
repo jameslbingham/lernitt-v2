@@ -9,20 +9,19 @@ export interface IUser extends Document {
   isTutor: boolean;
   tutorStatus: 'none' | 'pending' | 'approved' | 'rejected';
   bio?: string;
-  // Linked to the 3-layer hierarchy (Topics, Subjects, Sub-categories)
   subjectIds: mongoose.Types.ObjectId[]; 
-  // Financials now anchored to USD
   hourlyRate: number; 
   preferredCurrency: string;
   avatar?: string;
   stripeAccountId?: string;
   paypalEmail?: string;
+  // Added for Bob's PayPal preference
+  withdrawalMethod: 'Stripe' | 'PayPal'; 
   payoutsEnabled: boolean;
   isAdmin: boolean;
   country?: string;
-  // Required for the CalendarEngine and global booking
   timezone: string; 
-  totalEarnings: number; // Stored in USD
+  totalEarnings: number;
   totalLessons: number;
   createdAt: Date;
   updatedAt: Date;
@@ -41,18 +40,17 @@ const UserSchema: Schema = new Schema(
       default: 'none' 
     },
     bio: { type: String },
-    // References the Category model for hierarchical filtering
     subjectIds: [{ type: Schema.Types.ObjectId, ref: 'Category' }],
-    // Renamed 'price' to 'hourlyRate' and set default master currency
     hourlyRate: { type: Number, default: 0 },
     preferredCurrency: { type: String, default: 'USD' },
     avatar: { type: String },
     stripeAccountId: { type: String },
     paypalEmail: { type: String },
+    // Logic for Bob to elect PayPal in his profile
+    withdrawalMethod: { type: String, enum: ['Stripe', 'PayPal'], default: 'Stripe' },
     payoutsEnabled: { type: Boolean, default: false },
     isAdmin: { type: Boolean, default: false },
     country: { type: String },
-    // Defaults to UTC, but will be updated during onboarding
     timezone: { type: String, default: 'UTC' },
     totalEarnings: { type: Number, default: 0 },
     totalLessons: { type: Number, default: 0 },
@@ -60,7 +58,6 @@ const UserSchema: Schema = new Schema(
   { timestamps: true }
 );
 
-// Indexes for fast search and filtering
 UserSchema.index({ email: 1 });
 UserSchema.index({ role: 1 });
 UserSchema.index({ tutorStatus: 1 });
