@@ -1,28 +1,38 @@
+// src/app/dashboard/page.tsx
 import React from 'react';
 import styles from './dashboard.module.css';
 import clientPromise from '../../lib/mongodb';
+import StatusBanner from '@/components/dashboard/StatusBanner';
 
-async function getLessons() {
+async function getDashboardData() {
   try {
     const client = await clientPromise;
-    // Standardized on 'lernitt_v2' to match your seed script
     const db = client.db("lernitt_v2");
     
+    // 1. Fetch Bob's specific tutor status
+    // In a real app, we'd use the logged-in session ID. 
+    // For now, we fetch the tutor record (Bob) to show the banner.
+    const bob = await db.collection("users").findOne({ role: 'tutor' });
+
+    // 2. Fetch Recent Lessons
     const lessons = await db.collection("lessons")
       .find({})
       .sort({ date: -1 })
       .limit(10)
       .toArray();
     
-    return JSON.parse(JSON.stringify(lessons));
+    return {
+      lessons: JSON.parse(JSON.stringify(lessons)),
+      status: bob?.tutorStatus || 'none'
+    };
   } catch (e) {
     console.error("Database Error:", e);
-    return [];
+    return { lessons: [], status: 'none' };
   }
 }
 
 export default async function TutorDashboard() {
-  const lessons = await getLessons();
+  const { lessons, status } = await getDashboardData();
   
   // Real-time financial calculations
   const totalGross = lessons.reduce((sum: number, l: any) => sum + (Number(l.amount) || 0), 0);
@@ -48,6 +58,9 @@ export default async function TutorDashboard() {
           </div>
           <button className={styles.withdrawBtn}>Withdraw Earnings</button>
         </div>
+
+        {/* DAY 5 NOTIFICATION BANNER */}
+        <StatusBanner status={status} />
 
         {/* Financial Summary Cards */}
         <div className={styles.statsGrid}>
@@ -81,14 +94,12 @@ export default async function TutorDashboard() {
                     <td className={styles.td}>
                       <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
                         <div style={{display: 'flex', alignItems: 'center'}}>
-                          {/* Student Initials Avatar */}
                           <div style={{width: '44px', height: '44px', backgroundColor: '#f1f5f9', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', color: '#64748b', marginRight: '14px'}}>
                             {lesson.studentName?.charAt(0) || 'S'}
                           </div>
                           <div style={{textAlign: 'left'}}>
                             <div style={{fontWeight: '800', fontSize: '16px'}}>
                               {lesson.studentName}
-                              {/* V2 Protocol REC Badge */}
                               {lesson.recordingEnabled && (
                                 <span style={{marginLeft: '8px', fontSize: '10px', backgroundColor: '#fee2e2', color: '#ef4444', padding: '2px 6px', borderRadius: '6px', verticalAlign: 'middle'}}>REC</span>
                               )}
@@ -97,7 +108,6 @@ export default async function TutorDashboard() {
                           </div>
                         </div>
                         
-                        {/* START LESSON BUTTON - Link to Daily.co room */}
                         <a 
                           href={lesson.videoLink || "#"} 
                           target="_blank" 
@@ -130,8 +140,8 @@ export default async function TutorDashboard() {
                 <tr>
                   <td colSpan={4} style={{padding: '60px', textAlign: 'center', color: '#64748b'}}>
                     <div style={{fontSize: '40px', marginBottom: '20px'}}>🔍</div>
-                    <div style={{fontWeight: '700', fontSize: '18px'}}>Connecting to database...</div>
-                    <p style={{fontSize: '14px', marginTop: '8px'}}>Refresh the page to see your live data.</p>
+                    <div style={{fontWeight: '700', fontSize: '18px'}}>No lessons found...</div>
+                    <p style={{fontSize: '14px', marginTop: '8px'}}>Your scheduled lessons will appear here.</p>
                   </td>
                 </tr>
               )}
