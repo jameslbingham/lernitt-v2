@@ -1,6 +1,7 @@
 // src/app/api/tutors/availability/route.ts
 import { NextResponse } from 'next/server';
-import clientPromise from '@/lib/mongodb';
+// Explicit relative path to match your src/lib folder structure
+import clientPromise from '../../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 
 export async function GET(req: Request) {
@@ -8,18 +9,21 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const tutorId = searchParams.get('tutorId');
     
-    if (!tutorId) return NextResponse.json({ error: "Tutor ID required" }, { status: 400 });
+    if (!tutorId) {
+      return NextResponse.json({ error: "Tutor ID required" }, { status: 400 });
+    }
 
     const client = await clientPromise;
     const db = client.db("lernitt_v2");
     
-    // Fetch all availability records for this tutor (both recurring and overrides)
+    // Using your advancedavailabilities collection as seen in V2 models
     const availability = await db.collection("advancedavailabilities")
       .find({ tutor: new ObjectId(tutorId), active: true })
       .toArray();
 
     return NextResponse.json(availability);
   } catch (error) {
+    console.error("Availability GET Error:", error);
     return NextResponse.json({ error: "Failed to load availability" }, { status: 500 });
   }
 }
@@ -32,8 +36,6 @@ export async function POST(req: Request) {
     const client = await clientPromise;
     const db = client.db("lernitt_v2");
 
-    // italki logic: If we save a recurring day, update that specific day's template.
-    // If we save an override, it only affects that specific date.
     const filter = type === 'recurring' 
       ? { tutor: new ObjectId(tutorId), type: 'recurring', dayOfWeek }
       : { tutor: new ObjectId(tutorId), type: 'override', specificDate: new Date(specificDate) };
@@ -54,6 +56,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error("Availability POST Error:", error);
     return NextResponse.json({ error: "Failed to save availability" }, { status: 500 });
   }
 }
