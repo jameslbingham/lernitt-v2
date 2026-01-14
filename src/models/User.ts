@@ -15,7 +15,7 @@ export interface IUser extends Document {
   avatar?: string;
   stripeAccountId?: string;
   paypalEmail?: string;
-  // Added for Bob's PayPal preference
+  // Added to allow Bob to choose his withdrawal method
   withdrawalMethod: 'Stripe' | 'PayPal'; 
   payoutsEnabled: boolean;
   isAdmin: boolean;
@@ -46,7 +46,7 @@ const UserSchema: Schema = new Schema(
     avatar: { type: String },
     stripeAccountId: { type: String },
     paypalEmail: { type: String },
-    // Logic for Bob to elect PayPal in his profile
+    // Profile preference for payouts
     withdrawalMethod: { type: String, enum: ['Stripe', 'PayPal'], default: 'Stripe' },
     payoutsEnabled: { type: Boolean, default: false },
     isAdmin: { type: Boolean, default: false },
