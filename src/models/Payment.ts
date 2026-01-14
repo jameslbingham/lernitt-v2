@@ -15,7 +15,7 @@ export interface IPayment extends Document {
     orderId?: string; // For PayPal
     captureId?: string;
   };
-  refundAmount: number; // For "Safety Net" functionality
+  refundAmount: number;
   refundProviderId?: string;
   refundedAt?: Date;
   meta?: any;
@@ -29,7 +29,7 @@ const PaymentSchema: Schema = new Schema(
     lesson: { type: Schema.Types.ObjectId, ref: 'Lesson', required: true },
     provider: { type: String, enum: ['stripe', 'paypal'], required: true },
     amount: { type: Number, required: true, min: 0 },
-    currency: { type: String, default: 'USD', uppercase: true }, // Normalized to USD
+    currency: { type: String, default: 'USD', uppercase: true },
     status: { 
       type: String, 
       enum: ['pending', 'succeeded', 'failed', 'refunded'], 
@@ -51,7 +51,7 @@ const PaymentSchema: Schema = new Schema(
 );
 
 /* ----------------------------- Indexes ----------------------------- */
-// Essential for fast Webhook lookups
+// Essential for lightning-fast Webhook lookups from Stripe/PayPal
 PaymentSchema.index({ 'providerIds.checkoutSessionId': 1 });
 PaymentSchema.index({ 'providerIds.paymentIntentId': 1 });
 PaymentSchema.index({ 'providerIds.orderId': 1 });
@@ -59,8 +59,7 @@ PaymentSchema.index({ lesson: 1 });
 PaymentSchema.index({ user: 1 });
 
 /**
- * World-Class Addition: Replaces the external 'markPaid.js' script 
- * with a built-in method for Admin UI buttons.
+ * Admin logic: Replaces old v1 scripts with a direct database method.
  */
 PaymentSchema.statics.adminUpdateStatus = async function(paymentId: string, status: string) {
   return this.findByIdAndUpdate(paymentId, { status }, { new: true });
