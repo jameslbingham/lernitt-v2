@@ -7,46 +7,49 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const tutorId = searchParams.get('tutorId');
 
-  if (!tutorId) return NextResponse.json({ error: 'Tutor ID required' }, { status: 400 });
+  if (!tutorId) {
+    return NextResponse.json({ error: 'Tutor ID required' }, { status: 400 });
+  }
 
   await dbConnect();
 
   try {
-    // 1. Calculate Retention (Students with 3+ completed lessons)
-    const retentionStats = await Lesson.aggregate([
+    // 1. Calculate Retention: Students with 3 or more completed lessons
+    const retentionData = await Lesson.aggregate([
       { $match: { tutorId: new mongoose.Types.ObjectId(tutorId), status: 'completed' } },
-      { $group: { _id: "$studentId", sessionCount: { $sum: 1 } } }
+      { $group: { _id: "$studentId", count: { $sum: 1 } } }
     ]);
-    const loyalStudents = retentionStats.filter(s => s.sessionCount >= 3).length;
-    const retentionRate = retentionStats.length > 0 
-      ? ((loyalStudents / retentionStats.length) * 100).toFixed(1) 
+    
+    const loyalStudents = retentionData.filter(s => s.count >= 3).length;
+    const retentionRate = retentionData.length > 0 
+      ? ((loyalStudents / retentionData.length) * 100).toFixed(1) 
       : 0;
 
-    // 2. Curriculum Pacing (Information to help plan the curriculum)
-    const pacingData = await Lesson.aggregate([
+    // 2. Curriculum Planning: Get latest progress per student
+    const curriculumPlanning = await Lesson.aggregate([
       { $match: { tutorId: new mongoose.Types.ObjectId(tutorId) } },
       { $sort: { scheduledTime: -1 } },
       { $group: {
           _id: "$studentId",
-          currentUnit: { $first: "$curriculumUnit" },
+          currentModule: { $first: "$curriculumUnit" },
           lastTutorNote: { $first: "$progressNote" },
-          lastLessonDate: { $first: "$scheduledTime" }
+          lastSessionDate: { $first: "$scheduledTime" }
       }},
-      { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "studentInfo" } },
-      { $unwind: "$studentInfo" }
+      { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "student" } },
+      { $unwind: "$student" }
     ]);
 
     return NextResponse.json({
       summary: {
         retentionRate: `${retentionRate}%`,
-        totalStudentReach: retentionStats.length,
+        activeStudentCount: retentionData.length,
         loyalStudentCount: loyalStudents
       },
-      curriculumPlanning: pacingData.map(p => ({
-        studentName: p.studentInfo.name,
-        currentModule: p.currentUnit || "Baseline Assessment",
-        notesForNextLesson: p.lastTutorNote || "Prepare curriculum",
-        lastActivity: p.lastLessonDate
+      pacing: curriculumPlanning.map(p => ({
+        studentName: p.student.name,
+        module: p.currentModule || "Baseline Assessment",
+        notes: p.lastTutorNote || "No notes provided",
+        date: p.lastSessionDate
       }))
     });
   } catch (error: any) {
