@@ -7,7 +7,7 @@ export interface ILesson extends Document {
   durationMinutes: number;
   status: 'scheduled' | 'completed' | 'cancelled';
   price: number;
-  // Sophisticated tracking for curriculum planning
+  // Fields for sophisticated curriculum tracking and retention data
   curriculumUnit?: string;
   progressNote?: string;
   studentRating?: number;
@@ -30,5 +30,6 @@ const LessonSchema: Schema = new Schema(
   { timestamps: true }
 );
 
+// This ensures Lesson is exported correctly as a Model to fix the import error in route.ts
 const Lesson: Model<ILesson> = mongoose.models.Lesson || mongoose.model<ILesson>('Lesson', LessonSchema);
 export default Lesson;
