@@ -1,22 +1,22 @@
 import User from '@/models/User';
 
 /**
- * Handles withdrawal logic based on user profile preferences.
+ * Handles withdrawal logic. Bob may elect to withdraw into his PayPal account, 
+ * if that is what he has placed in his profile.
  */
 export async function processTutorWithdrawal(tutorId: string, amount: number) {
   const tutor = await User.findById(tutorId);
 
   if (!tutor) {
-    throw new Error("Tutor not found");
+    throw new Error("Tutor profile not found");
   }
 
-  // Bob may elect to withdraw into his PayPal account if that is in his profile
+  // Check the withdrawal election from the User profile
   if (tutor.withdrawalMethod === 'PayPal') {
     if (!tutor.paypalEmail) {
-      throw new Error("PayPal elected but no email address found in profile.");
+      throw new Error("PayPal election found, but no PayPal email is set in the profile.");
     }
     
-    // Payout logic for PayPal
     return {
       success: true,
       method: 'PayPal',
@@ -26,7 +26,7 @@ export async function processTutorWithdrawal(tutorId: string, amount: number) {
     };
   }
 
-  // Default to Stripe payout logic
+  // Default to Stripe for all other cases
   return {
     success: true,
     method: 'Stripe',
