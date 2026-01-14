@@ -2,19 +2,18 @@
 import React from 'react';
 import styles from './dashboard.module.css';
 import clientPromise from '../../lib/mongodb';
-import StatusBanner from '@/components/dashboard/StatusBanner';
+import StatusBanner from '../../components/dashboard/StatusBanner';
 
 async function getDashboardData() {
   try {
     const client = await clientPromise;
+    // Standardized on 'lernitt_v2' to match your setup
     const db = client.db("lernitt_v2");
     
-    // 1. Fetch Bob's specific tutor status
-    // In a real app, we'd use the logged-in session ID. 
-    // For now, we fetch the tutor record (Bob) to show the banner.
+    // 1. Fetch Bob's specific tutor record to check his status
     const bob = await db.collection("users").findOne({ role: 'tutor' });
 
-    // 2. Fetch Recent Lessons
+    // 2. Fetch Recent Lessons for the table
     const lessons = await db.collection("lessons")
       .find({})
       .sort({ date: -1 })
@@ -34,7 +33,7 @@ async function getDashboardData() {
 export default async function TutorDashboard() {
   const { lessons, status } = await getDashboardData();
   
-  // Real-time financial calculations
+  // Financial math for the cards
   const totalGross = lessons.reduce((sum: number, l: any) => sum + (Number(l.amount) || 0), 0);
   const totalNet = lessons.reduce((sum: number, l: any) => sum + (Number(l.netAmount) || 0), 0);
   const platformFees = totalGross - totalNet;
@@ -50,7 +49,7 @@ export default async function TutorDashboard() {
     <div className={styles.container}>
       <div className={styles.wrapper}>
         
-        {/* Dashboard Header */}
+        {/* Header Section */}
         <div className={styles.header}>
           <div style={{textAlign: 'left'}}>
             <h1 style={{fontSize: '36px', fontWeight: '900', letterSpacing: '-0.02em', margin: 0}}>Dashboard</h1>
@@ -59,10 +58,10 @@ export default async function TutorDashboard() {
           <button className={styles.withdrawBtn}>Withdraw Earnings</button>
         </div>
 
-        {/* DAY 5 NOTIFICATION BANNER */}
+        {/* DAY 5 NOTIFICATION BANNER: Tells Bob if he is Approved or Pending */}
         <StatusBanner status={status} />
 
-        {/* Financial Summary Cards */}
+        {/* Financial Cards */}
         <div className={styles.statsGrid}>
           {stats.map((stat, i) => (
             <div key={i} className={styles.statCard}>
@@ -73,7 +72,7 @@ export default async function TutorDashboard() {
           ))}
         </div>
 
-        {/* Recent Lessons Table */}
+        {/* Lessons Table */}
         <div className={styles.tableContainer}>
           <div className={styles.tableHeader}>
             <h2 style={{fontSize: '24px', fontWeight: '900', margin: 0}}>Recent Lessons</h2>
@@ -98,16 +97,10 @@ export default async function TutorDashboard() {
                             {lesson.studentName?.charAt(0) || 'S'}
                           </div>
                           <div style={{textAlign: 'left'}}>
-                            <div style={{fontWeight: '800', fontSize: '16px'}}>
-                              {lesson.studentName}
-                              {lesson.recordingEnabled && (
-                                <span style={{marginLeft: '8px', fontSize: '10px', backgroundColor: '#fee2e2', color: '#ef4444', padding: '2px 6px', borderRadius: '6px', verticalAlign: 'middle'}}>REC</span>
-                              )}
-                            </div>
+                            <div style={{fontWeight: '800', fontSize: '16px'}}>{lesson.studentName}</div>
                             <div style={{fontSize: '11px', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase'}}>{lesson.subject || 'English Lesson'}</div>
                           </div>
                         </div>
-                        
                         <a 
                           href={lesson.videoLink || "#"} 
                           target="_blank" 
@@ -115,33 +108,30 @@ export default async function TutorDashboard() {
                           style={{
                             backgroundColor: '#10b981',
                             color: 'white',
-                            padding: '10px 20px',
-                            borderRadius: '12px',
-                            fontSize: '12px',
+                            padding: '8px 16px',
+                            borderRadius: '10px',
+                            fontSize: '11px',
                             fontWeight: '900',
-                            textDecoration: 'none',
-                            boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.2)'
+                            textDecoration: 'none'
                           }}
                         >
-                          START LESSON
+                          START
                         </a>
                       </div>
                     </td>
                     <td className={styles.td} style={{textAlign: 'center', color: '#64748b', fontWeight: '600'}}>
                       {new Date(lesson.date).toLocaleDateString()}
                     </td>
-                    <td className={styles.td} style={{textAlign: 'right', fontWeight: '700'}}>${Number(lesson.amount).toFixed(2)}</td>
-                    <td className={styles.td} style={{textAlign: 'right'}}>
-                      <span className={styles.payoutText}>${Number(lesson.netAmount).toFixed(2)}</span>
+                    <td className={styles.td} style={{textAlign: 'right'}}>${Number(lesson.amount).toFixed(2)}</td>
+                    <td className={styles.td} style={{textAlign: 'right', fontWeight: '700', color: '#10b981'}}>
+                      ${Number(lesson.netAmount).toFixed(2)}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
                   <td colSpan={4} style={{padding: '60px', textAlign: 'center', color: '#64748b'}}>
-                    <div style={{fontSize: '40px', marginBottom: '20px'}}>🔍</div>
-                    <div style={{fontWeight: '700', fontSize: '18px'}}>No lessons found...</div>
-                    <p style={{fontSize: '14px', marginTop: '8px'}}>Your scheduled lessons will appear here.</p>
+                    No lessons found in the database.
                   </td>
                 </tr>
               )}
