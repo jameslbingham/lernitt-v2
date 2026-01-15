@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Disables the modern compiler that crashes older Mac hardware
+  // Forces Next.js to use a compiler compatible with your Intel Mac
   swcMinify: false,
 };
 
