@@ -16,16 +16,16 @@ export async function POST(request: Request) {
   try {
     const tutor = await User.findById(session.user.id);
     if (!tutor || tutor.totalEarnings <= 0) {
-      return NextResponse.json({ error: 'No funds available.' }, { status: 400 });
+      return NextResponse.json({ error: 'No funds.' }, { status: 400 });
     }
 
-    // Bob elects PayPal if in profile; otherwise Stripe
-    const result = await processTutorWithdrawal(tutor._id.toString(), tutor.totalEarnings);
+    // result handles Stripe vs PayPal election automatically
+    const payoutResult = await processTutorWithdrawal(tutor._id.toString(), tutor.totalEarnings);
 
-    if (result.success) {
-      tutor.totalEarnings = 0; // Reset Bob's balance
+    if (payoutResult.success) {
+      tutor.totalEarnings = 0; // Reset balance
       await tutor.save();
-      return NextResponse.json({ message: `Success! Paid via ${result.method}.`, result });
+      return NextResponse.json({ message: `Success! Paid via ${payoutResult.method}.`, details: payoutResult });
     }
     throw new Error("Transfer failed.");
   } catch (error: any) {
