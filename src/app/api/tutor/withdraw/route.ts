@@ -11,22 +11,23 @@ export async function POST(request: Request) {
   if (!session || session.user.role !== 'tutor') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
   await dbConnect();
   try {
     const tutor = await User.findById(session.user.id);
     if (!tutor || tutor.totalEarnings <= 0) {
       return NextResponse.json({ error: 'No funds available.' }, { status: 400 });
     }
-    const payoutResult = await processTutorWithdrawal(tutor._id.toString(), tutor.totalEarnings);
-    if (payoutResult.success) {
-      tutor.totalEarnings = 0;
+
+    // Bob elects PayPal if in profile; otherwise Stripe
+    const result = await processTutorWithdrawal(tutor._id.toString(), tutor.totalEarnings);
+
+    if (result.success) {
+      tutor.totalEarnings = 0; // Reset Bob's balance
       await tutor.save();
-      return NextResponse.json({ 
-        message: `Successfully initiated ${payoutResult.method} transfer.`,
-        details: payoutResult 
-      });
+      return NextResponse.json({ message: `Success! Paid via ${result.method}.`, result });
     }
-    throw new Error("Payout processor failed.");
+    throw new Error("Transfer failed.");
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
