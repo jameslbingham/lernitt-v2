@@ -14,7 +14,7 @@ export default function LessonCompletionModal({ tutorEmail }: { tutorEmail: stri
       });
       if (res.ok) window.location.reload();
     } catch (error) {
-      console.error(error);
+      console.error("Error completing lesson:", error);
     }
     setLoading(false);
   };
