@@ -1,15 +1,14 @@
-import clientPromise from "../../lib/mongodb";
-import LessonCompletionModal from "../../components/tutor/LessonCompletionModal";
+import clientPromise from "../../../lib/mongodb";
+import LessonCompletionModal from "../../../components/tutor/LessonCompletionModal";
 
 async function getTutorData() {
   const client = await clientPromise;
   const db = client.db("lernitt-v2");
   
-  // Find Bob in your local database
-  let tutor = await db.collection("users").findOne({ email: "bob@test.com" });
+  // Find Bob in your database
+  const tutorData = await db.collection("users").findOne({ email: "bob@test.com" });
 
-  // If Bob is missing, create him immediately with the $50.00 balance
-  if (!tutor) {
+  if (!tutorData) {
     const newBob = {
       email: "bob@test.com",
       name: "Bob",
@@ -18,10 +17,10 @@ async function getTutorData() {
       paypalEmail: "bob-paypal@test.com"
     };
     await db.collection("users").insertOne(newBob);
-    tutor = newBob;
+    return JSON.parse(JSON.stringify(newBob));
   }
 
-  return JSON.parse(JSON.stringify(tutor));
+  return JSON.parse(JSON.stringify(tutorData));
 }
 
 export default async function TutorProfilePage() {
