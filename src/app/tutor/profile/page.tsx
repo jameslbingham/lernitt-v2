@@ -1,53 +1,54 @@
-// @ts-nocheck
-'use client';
-import { useState, useEffect } from 'react';
-import LessonCompletionModal from '@/components/tutor/LessonCompletionModal';
+import clientPromise from "@/lib/mongodb";
+import LessonCompletionModal from "@/components/tutor/LessonCompletionModal";
 
-export default function TutorProfile() {
-  const [balance, setBalance] = useState(0);
-  const [showModal, setShowModal] = useState(false);
+async function getTutorData() {
+  const client = await clientPromise;
+  const db = client.db("lernitt-v2");
+  
+  let tutor = await db.collection("users").findOne({ email: "bob@test.com" });
 
-  // Fetch Bob's data on load
-  useEffect(() => {
-    fetch('/api/user/profile')
-      .then(res => res.json())
-      .then(data => setBalance(data.totalEarnings || 0));
-  }, []);
+  if (!tutor) {
+    const newBob = {
+      email: "bob@test.com",
+      name: "Bob",
+      role: "tutor",
+      balance: 50.00,
+      paypalEmail: "bob-paypal@test.com"
+    };
+    await db.collection("users").insertOne(newBob);
+    tutor = newBob;
+  }
+
+  return JSON.parse(JSON.stringify(tutor));
+}
+
+export default async function TutorProfilePage() {
+  const tutor = await getTutorData();
 
   return (
-    <div className="max-w-4xl mx-auto p-8">
-      <div className="bg-white border rounded-2xl p-8 shadow-sm">
-        <h1 className="text-2xl font-bold mb-6">Tutor Dashboard</h1>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="p-6 bg-blue-50 rounded-xl border border-blue-100">
-            <p className="text-blue-600 font-medium mb-1">Available Funds</p>
-            <p className="text-4xl font-bold text-blue-900">${balance.toFixed(2)}</p>
-          </div>
-          
-          <div className="flex flex-col gap-3 justify-center">
-            {/* The Earning Trigger */}
-            <button 
-              onClick={() => setShowModal(true)}
-              className="bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition"
-            >
-              Test: Complete $25.00 Lesson
-            </button>
-            
-            {/* The Withdrawal Trigger (Day 8 & 9) */}
-            <button className="bg-gray-900 text-white py-2 rounded-lg hover:bg-black transition">
-              Withdraw Funds
-            </button>
-          </div>
+    <div className="p-8 max-w-4xl mx-auto font-sans">
+      <h1 className="text-3xl font-bold mb-6">Tutor Dashboard</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="bg-white shadow rounded-lg p-6 border border-gray-200">
+          <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Available Funds</h2>
+          <p className="text-4xl font-bold text-green-600">${tutor.balance.toFixed(2)}</p>
+        </div>
+
+        <div className="bg-white shadow rounded-lg p-6 border border-gray-200">
+          <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Withdrawal Method</h2>
+          <p className="text-lg font-semibold text-blue-600">PayPal: {tutor.paypalEmail}</p>
+          <button className="mt-4 w-full bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-700 transition">
+            Withdraw to PayPal
+          </button>
         </div>
       </div>
 
-      {showModal && (
-        <LessonCompletionModal onComplete={() => {
-          setShowModal(false);
-          window.location.reload(); // Refresh to see the new $21.25
-        }} />
-      )}
+      <div className="bg-gray-50 p-6 rounded-lg border border-dashed border-gray-400 text-center">
+        <h3 className="text-lg font-bold mb-2">Audit Test</h3>
+        <p className="text-sm text-gray-600 mb-4">Click to simulate a $25 lesson (Adds $21.25 to balance).</p>
+        <LessonCompletionModal tutorEmail={tutor.email} />
+      </div>
     </div>
   );
 }
