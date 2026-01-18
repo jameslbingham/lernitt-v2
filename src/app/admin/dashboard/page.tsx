@@ -3,132 +3,62 @@ import React from 'react';
 import clientPromise from '../../../lib/database/mongodb';
 
 /**
- * Server-side data aggregation for the Admin Dashboard.
- * This ensures the page loads with fresh data immediately.
+ * We are using direct MongoDB calls here to avoid any intermediate 
+ * API layers that might trigger the SWC binary error on older hardware.
  */
 async function getAdminStats() {
-  const client = await clientPromise;
-  const db = client.db("lernitt-v2");
+  try {
+    const client = await clientPromise;
+    const db = client.db("lernitt-v2");
 
-  // Aggregation logic ported from v1 finance.js
-  const COMMISSION_RATE = 0.15;
+    // Standard 15% platform fee logic
+    const COMMISSION_RATE = 0.15;
 
-  const payments = await db.collection("payments").aggregate([
-    { $match: { status: "succeeded" } },
-    { $group: { _id: null, total: { $sum: "$amount" } } }
-  ]).toArray();
+    // Aggregate data directly from collections
+    const payments = await db.collection("payments").find({ status: "succeeded" }).toArray();
+    const liabilityData = await db.collection("users").find({ role: "tutor" }).toArray();
 
-  const liabilityData = await db.collection("users").aggregate([
-    { $match: { role: "tutor" } },
-    { $group: { _id: null, total: { $sum: "$totalEarnings" } } }
-  ]).toArray();
+    const gmv = payments.reduce((acc, curr) => acc + (curr.amount || 0), 0);
+    const liability = liabilityData.reduce((acc, curr) => acc + (curr.totalEarnings || 0), 0);
+    const revenue = gmv * COMMISSION_RATE;
 
-  const gmv = payments[0]?.total || 0;
-  const revenue = gmv * COMMISSION_RATE;
-  const liability = liabilityData[0]?.total || 0;
-
-  return { gmv, revenue, liability };
+    return { gmv, revenue, liability };
+  } catch (err) {
+    console.error("Dashboard DB Error:", err);
+    return { gmv: 0, revenue: 0, liability: 0 };
+  }
 }
 
 export default async function AdminDashboardPage() {
   const stats = await getAdminStats();
 
   return (
-    <div className="admin-wrapper">
-      <header className="admin-header">
-        <h1 className="admin-title">Marketplace Revenue</h1>
-        <p className="admin-subtitle">Global Platform Overview</p>
+    <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'sans-serif' }}>
+      <header style={{ marginBottom: '40px', borderBottom: '5px solid #000', paddingBottom: '20px' }}>
+        <h1 style={{ fontSize: '42px', fontWeight: '900', textTransform: 'uppercase', margin: 0 }}>
+          Marketplace Revenue
+        </h1>
+        <p style={{ fontSize: '14px', fontWeight: 'bold', color: '#666', textTransform: 'uppercase' }}>
+          Hardware-Safe Admin View
+        </p>
       </header>
 
-      <div className="kpi-container">
-        {/* Gross Merchandise Value */}
-        <div className="kpi-card">
-          <label className="kpi-label">Gross Volume (GMV)</label>
-          <p className="kpi-value">${stats.gmv.toFixed(2)}</p>
-          <span className="kpi-meta">Total processed payments</span>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
+        <div style={{ background: '#fff', border: '4px solid #000', borderRadius: '24px', padding: '32px', boxShadow: '12px 12px 0px 0px #000' }}>
+          <label style={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', opacity: 0.5 }}>Gross Volume</label>
+          <p style={{ fontSize: '54px', fontWeight: '900', margin: 0 }}>${stats.gmv.toFixed(2)}</p>
         </div>
 
-        {/* Platform Revenue - The 15% Cut */}
-        <div className="kpi-card highlight">
-          <label className="kpi-label">Platform Revenue (15%)</label>
-          <p className="kpi-value">${stats.revenue.toFixed(2)}</p>
-          <span className="kpi-meta">Net Lernitt earnings</span>
+        <div style={{ background: '#facc15', border: '4px solid #000', borderRadius: '24px', padding: '32px', boxShadow: '12px 12px 0px 0px #000' }}>
+          <label style={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', opacity: 0.5 }}>Platform Fee (15%)</label>
+          <p style={{ fontSize: '54px', fontWeight: '900', margin: 0 }}>${stats.revenue.toFixed(2)}</p>
         </div>
 
-        {/* Current Liability - Money owed to all tutors */}
-        <div className="kpi-card warning">
-          <label className="kpi-label">Current Liability</label>
-          <p className="kpi-value">${stats.liability.toFixed(2)}</p>
-          <span className="kpi-meta">Total funds held in tutor balances</span>
+        <div style={{ background: '#fee2e2', border: '4px solid #000', borderRadius: '24px', padding: '32px', boxShadow: '12px 12px 0px 0px #000' }}>
+          <label style={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', opacity: 0.5 }}>Tutor Liability</label>
+          <p style={{ fontSize: '54px', fontWeight: '900', margin: 0, color: '#dc2626' }}>${stats.liability.toFixed(2)}</p>
         </div>
       </div>
-
-      <style jsx>{`
-        .admin-wrapper {
-          padding: 40px;
-          max-width: 1200px;
-          margin: 0 auto;
-          font-family: system-ui, -apple-system, sans-serif;
-        }
-        .admin-header {
-          margin-bottom: 48px;
-          border-bottom: 5px solid #000;
-          padding-bottom: 20px;
-        }
-        .admin-title {
-          font-size: 42px;
-          font-weight: 900;
-          text-transform: uppercase;
-          italic: true;
-          margin: 0;
-          letter-spacing: -2px;
-        }
-        .admin-subtitle {
-          font-size: 14px;
-          font-weight: bold;
-          color: #666;
-          text-transform: uppercase;
-          letter-spacing: 2px;
-        }
-        .kpi-container {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 32px;
-        }
-        .kpi-card {
-          background: #fff;
-          border: 4px solid #000;
-          border-radius: 24px;
-          padding: 32px;
-          box-shadow: 12px 12px 0px 0px rgba(0,0,0,1);
-        }
-        .kpi-card.highlight { background-color: #facc15; }
-        .kpi-card.warning { background-color: #fee2e2; }
-        .kpi-label {
-          font-size: 10px;
-          font-weight: 900;
-          text-transform: uppercase;
-          color: #000;
-          opacity: 0.5;
-          display: block;
-          margin-bottom: 8px;
-        }
-        .kpi-value {
-          font-size: 54px;
-          font-weight: 900;
-          margin: 0;
-          letter-spacing: -3px;
-        }
-        .warning .kpi-value { color: #dc2626; }
-        .kpi-meta {
-          font-size: 11px;
-          font-weight: bold;
-          color: #666;
-          text-transform: uppercase;
-          margin-top: 12px;
-          display: block;
-        }
-      `}</style>
     </div>
   );
 }
