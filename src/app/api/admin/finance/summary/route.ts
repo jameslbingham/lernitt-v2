@@ -3,11 +3,11 @@ import { NextResponse } from 'next/server';
 import clientPromise from '../../../../lib/database/mongodb';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../auth/[...nextauth]/route";
+import { TimezoneEngine } from '../../../../lib/utils/timezoneUtil';
 
 export async function GET() {
   const session = await getServerSession(authOptions);
   
-  // Security Guard: Admin only
   if (!session || session.user.role !== 'admin') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -15,37 +15,33 @@ export async function GET() {
   try {
     const client = await clientPromise;
     const db = client.db("lernitt-v2");
-
-    // COMMISSION logic ported from v1 finance.js (0.15)
     const COMMISSION_RATE = 0.15;
 
-    // 1. Aggregate Successful Payments (Gross Merchandise Value)
+    // Standardize all current calculations to Victorian Time
+    const currentVictoriaTime = TimezoneEngine.formatInZone(new Date());
+
     const payments = await db.collection("payments").aggregate([
       { $match: { status: "succeeded" } },
       { $group: { _id: null, total: { $sum: "$amount" } } }
     ]).toArray();
     const gmv = payments[0]?.total || 0;
 
-    // 2. Aggregate Approved Refunds (To be deducted from GMV)
     const refunds = await db.collection("refunds").aggregate([
       { $match: { status: "approved" } },
       { $group: { _id: null, total: { $sum: "$amount" } } }
     ]).toArray();
     const totalRefunds = refunds[0]?.total || 0;
 
-    // 3. Aggregate Successful Payouts (Money already left the platform)
     const payouts = await db.collection("payouts").aggregate([
       { $match: { status: "succeeded" } },
       { $group: { _id: null, total: { $sum: "$amount" } } }
     ]).toArray();
     const totalPaidOut = payouts[0]?.total || 0;
 
-    // 4. Calculate Net Metrics
     const netGMV = Math.max(0, gmv - totalRefunds);
     const platformRevenue = netGMV * COMMISSION_RATE;
     const tutorTotalNet = netGMV - platformRevenue;
 
-    // 5. Aggregate Current Tutor Liability (Total of all tutor balances)
     const liabilityData = await db.collection("users").aggregate([
       { $match: { role: "tutor" } },
       { $group: { _id: null, totalBalance: { $sum: "$balance" } } }
@@ -57,12 +53,12 @@ export async function GET() {
         grossVolume: gmv,
         refunds: totalRefunds,
         netVolume: netGMV,
-        revenue: platformRevenue, // The 15% cut
+        revenue: platformRevenue,
         tutorNet: tutorTotalNet,
         payouts: totalPaidOut,
         liability: currentLiability
       },
-      timestamp: new Date().toISOString()
+      lastUpdated: currentVictoriaTime // Corrected to engine output [cite: 2026-01-10]
     });
 
   } catch (error) {
