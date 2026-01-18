@@ -5,7 +5,7 @@ import React, { useEffect, useState, useMemo } from 'react';
  * Utility: Status Styling Classes
  * Ported from v1 statusClass logic
  */
-const getStatusClass = (s: string) => {
+const getStatusClass = (s) => {
   if (s === "open") return "status-open";
   if (s === "pending") return "status-pending";
   if (s === "resolved" || s === "approved_refund") return "status-resolved";
@@ -15,10 +15,11 @@ const getStatusClass = (s: string) => {
 };
 
 export default function DisputeList() {
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [expanded, setExpanded] = useState<string | null>(null);
-  const [noteInput, setNoteInput] = useState<{ [key: string]: string }>({});
+  const [expanded, setExpanded] = useState(null);
+  const [selected, setSelected] = useState([]);
+  const [noteInput, setNoteInput] = useState({});
 
   // Ported filters from v1
   const [filters, setFilters] = useState({
@@ -33,7 +34,9 @@ export default function DisputeList() {
       try {
         const res = await fetch('/api/admin/disputes');
         const data = await res.json();
-        setItems(Array.isArray(data) ? data : []);
+        // Defensive check ported from v1
+        const arr = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
+        setItems(arr);
       } catch (err) {
         console.error("Dispute load error:", err);
       } finally {
@@ -43,8 +46,7 @@ export default function DisputeList() {
     loadDisputes();
   }, []);
 
-  // Ported logic for status updates and notes
-  const updateStatus = async (id: string, nextStatus: string) => {
+  const updateStatus = async (id, nextStatus) => {
     try {
       const res = await fetch(`/api/admin/disputes/${id}`, {
         method: 'PATCH',
@@ -52,19 +54,15 @@ export default function DisputeList() {
         body: JSON.stringify({ status: nextStatus })
       });
       if (res.ok) {
-        setItems(prev => prev.map(d => d._id === id ? { ...d, status: nextStatus } : d));
+        setItems(prev => prev.map(d => (d._id === id || d.id === id) ? { ...d, status: nextStatus } : d));
       }
     } catch (err) {
       alert("Status update failed");
     }
   };
 
-  const addNote = async (id: string) => {
-    const text = noteInput[id]?.trim();
-    if (!text) return;
-    // Logic for note persistence would go to a /note API route
-    alert(`Internal Note Added: ${text}`);
-    setNoteInput(prev => ({ ...prev, [id]: "" }));
+  const toggleSelect = (id) => {
+    setSelected(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]));
   };
 
   const filteredItems = useMemo(() => {
@@ -80,65 +78,89 @@ export default function DisputeList() {
 
   return (
     <div className="dispute-container">
-      {/* Ported Filter Header */}
-      <div className="filter-bar">
-        <input 
-          placeholder="Search disputes..." 
-          className="search-input"
-          value={filters.q}
-          onChange={(e) => setFilters({...filters, q: e.target.value})}
-        />
-        <select value={filters.status} onChange={(e) => setFilters({...filters, status: e.target.value})}>
-          <option value="">All Statuses</option>
-          <option value="open">Open</option>
-          <option value="resolved">Resolved</option>
-          <option value="rejected">Rejected</option>
-        </select>
+      {/* Filter Header Ported from v1 */}
+      <div className="admin-controls">
+        <div className="filter-bar">
+          <input 
+            placeholder="Search disputes..." 
+            className="search-input"
+            value={filters.q}
+            onChange={(e) => setFilters({...filters, q: e.target.value})}
+          />
+          <select value={filters.status} onChange={(e) => setFilters({...filters, status: e.target.value})}>
+            <option value="">All Statuses</option>
+            <option value="open">Open</option>
+            <option value="pending">Pending</option>
+            <option value="resolved">Resolved</option>
+            <option value="rejected">Rejected</option>
+            <option value="approved_refund">Approved Refund</option>
+            <option value="denied">Denied</option>
+          </select>
+        </div>
+        
+        <div className="bulk-actions">
+          <button 
+            className="btn bulk" 
+            disabled={selected.length === 0}
+            onClick={() => selected.forEach(id => updateStatus(id, 'resolved'))}
+          >
+            Bulk Resolve ({selected.length})
+          </button>
+        </div>
       </div>
 
       <div className="dispute-list">
         {filteredItems.map(d => (
-          <div key={d._id} className={`dispute-card ${expanded === d._id ? 'expanded' : ''}`}>
-            <div className="card-header" onClick={() => setExpanded(expanded === d._id ? null : d._id)}>
+          <div key={d._id || d.id} className={`dispute-card ${expanded === (d._id || d.id) ? 'expanded' : ''} ${d.status === 'open' ? 'urgent' : ''}`}>
+            <div className="card-header">
               <div className="header-left">
-                <span className={`status-tag ${getStatusClass(d.status)}`}>{d.status}</span>
-                <span className="dispute-type">{d.type || "Dispute"}</span>
-                <span className="dispute-id">#{d._id.slice(-6)}</span>
+                <input 
+                  type="checkbox" 
+                  checked={selected.includes(d._id || d.id)} 
+                  onChange={() => toggleSelect(d._id || d.id)} 
+                />
+                <span className={`status-tag ${getStatusClass(d.status)}`}>{d.status || 'open'}</span>
+                <span className="dispute-type">{d.type || "Refund"}</span>
+                <span className="dispute-id">#{ (d._id || d.id).slice(-6) }</span>
               </div>
-              <div className="header-right">
-                <span className="dispute-date">{new Date(d.createdAt).toLocaleDateString()}</span>
+              <div className="header-right" onClick={() => setExpanded(expanded === (d._id || d.id) ? null : (d._id || d.id))}>
+                <span className="expand-icon">{expanded === (d._id || d.id) ? '−' : '+'}</span>
               </div>
             </div>
 
-            <div className="dispute-reason">{d.reason}</div>
+            <div className="dispute-reason" onClick={() => setExpanded(expanded === (d._id || d.id) ? null : (d._id || d.id))}>
+              {d.reason}
+            </div>
 
-            {expanded === d._id && (
+            {expanded === (d._id || d.id) && (
               <div className="card-details">
                 <div className="details-grid">
                   <div className="detail-box">
-                    <label>Student</label>
-                    <p>{d.studentName || "User"}</p>
+                    <label>Student / User</label>
+                    <p>{d.student?.name || d.user || "Unknown"}</p>
                   </div>
                   <div className="detail-box">
-                    <label>Lesson</label>
-                    <p>{d.lessonSubject || "Lesson"}</p>
+                    <label>Lesson Reference</label>
+                    <p>{d.lessonSubject || d.lessonId || "N/A"}</p>
                   </div>
                 </div>
 
                 <div className="action-area">
-                  <button className="btn resolve" onClick={() => updateStatus(d._id, 'approved_refund')}>Approve Refund</button>
-                  <button className="btn reject" onClick={() => updateStatus(d._id, 'denied')}>Deny</button>
-                  <button className="btn warn" onClick={() => updateStatus(d._id, 'warning_tutor')}>Warn Tutor</button>
+                  <button className="btn resolve" onClick={() => updateStatus(d._id || d.id, 'approved_refund')}>Approve Refund</button>
+                  <button className="btn reject" onClick={() => updateStatus(d._id || d.id, 'denied')}>Deny</button>
+                  <button className="btn warn" onClick={() => updateStatus(d._id || d.id, 'warning_tutor')}>Warn Tutor</button>
                 </div>
-
-                <div className="note-section">
-                  <input 
-                    placeholder="Add internal admin note..." 
-                    value={noteInput[d._id] || ""}
-                    onChange={(e) => setNoteInput({...noteInput, [d._id]: e.target.value})}
-                  />
-                  <button onClick={() => addNote(d._id)}>Add</button>
-                </div>
+                
+                {d.notes && d.notes.length > 0 && (
+                  <div className="v1-notes">
+                    <label>Internal History</label>
+                    {d.notes.map((n, i) => (
+                      <div key={i} className="note-item">
+                        <strong>{n.by}:</strong> {n.text}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -147,34 +169,40 @@ export default function DisputeList() {
 
       <style jsx>{`
         .dispute-container { font-family: sans-serif; }
-        .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; }
-        .search-input { flex: 1; padding: 10px; border: 2px solid #000; border-radius: 8px; }
-        select { padding: 10px; border: 2px solid #000; border-radius: 8px; font-weight: bold; }
-        .dispute-list { display: flex; flex-direction: column; gap: 15px; }
-        .dispute-card { background: white; border: 3px solid #000; border-radius: 16px; padding: 15px; transition: 0.2s; }
-        .dispute-card.expanded { border-color: #2563eb; }
-        .card-header { display: flex; justify-content: space-between; cursor: pointer; margin-bottom: 10px; }
-        .header-left { display: flex; align-items: center; gap: 10px; }
-        .status-tag { padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 900; text-transform: uppercase; border: 1px solid #000; }
+        .admin-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px; }
+        .filter-bar { display: flex; gap: 10px; flex: 1; }
+        .search-input { flex: 1; padding: 12px; border: 3px solid #000; border-radius: 12px; font-weight: bold; }
+        select { padding: 10px; border: 3px solid #000; border-radius: 12px; font-weight: 900; text-transform: uppercase; font-size: 10px; }
+        .dispute-list { display: flex; flex-direction: column; gap: 12px; }
+        .dispute-card { background: white; border: 3px solid #000; border-radius: 16px; padding: 16px; transition: 0.2s; box-shadow: 6px 6px 0px 0px #000; }
+        .dispute-card.urgent { background: #fffcf0; border-color: #eab308; }
+        .dispute-card.expanded { border-color: #2563eb; transform: scale(1.01); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .status-tag { padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 900; text-transform: uppercase; border: 2px solid #000; }
         .status-open { background: #fef08a; }
         .status-resolved { background: #dcfce7; }
         .status-rejected { background: #fee2e2; }
         .status-warning { background: #f3e8ff; }
-        .dispute-id { color: #888; font-family: monospace; font-size: 12px; }
-        .dispute-reason { font-size: 14px; font-weight: bold; color: #333; }
-        .card-details { margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; }
-        .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .detail-box label { font-size: 10px; text-transform: uppercase; color: #999; display: block; }
-        .detail-box p { margin: 0; font-weight: bold; font-size: 12px; }
-        .action-area { display: flex; gap: 8px; margin-bottom: 15px; }
-        .btn { padding: 8px 12px; border-radius: 8px; font-weight: 900; font-size: 10px; border: 2px solid #000; cursor: pointer; text-transform: uppercase; }
+        .dispute-type { font-weight: 900; text-transform: uppercase; font-size: 10px; color: #666; }
+        .dispute-id { color: #aaa; font-family: monospace; font-size: 11px; }
+        .expand-icon { font-weight: 900; cursor: pointer; font-size: 20px; }
+        .dispute-reason { font-size: 15px; font-weight: 800; color: #000; cursor: pointer; }
+        .card-details { margin-top: 16px; padding-top: 16px; border-top: 2px solid #eee; }
+        .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .detail-box label { font-size: 9px; text-transform: uppercase; color: #999; font-weight: 900; display: block; margin-bottom: 4px; }
+        .detail-box p { margin: 0; font-weight: 700; font-size: 13px; color: #333; }
+        .action-area { display: flex; gap: 10px; margin-bottom: 20px; }
+        .btn { padding: 10px 16px; border-radius: 10px; font-weight: 900; font-size: 10px; border: 2px solid #000; cursor: pointer; text-transform: uppercase; transition: 0.1s; }
+        .btn:active { transform: translateY(2px); }
         .resolve { background: #22c55e; color: #fff; }
         .reject { background: #ef4444; color: #fff; }
         .warn { background: #3b82f6; color: #fff; }
-        .note-section { display: flex; gap: 5px; }
-        .note-section input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px; }
-        .note-section button { background: #000; color: #fff; border: none; padding: 0 15px; border-radius: 6px; cursor: pointer; }
-        .loading-state { padding: 40px; text-align: center; font-weight: 900; font-size: 12px; color: #999; }
+        .bulk { background: #000; color: #fff; }
+        .bulk:disabled { opacity: 0.3; cursor: not-allowed; }
+        .v1-notes { background: #f9f9f9; padding: 12px; border-radius: 10px; border: 1px solid #ddd; }
+        .note-item { font-size: 12px; margin-bottom: 6px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+        .loading-state { padding: 60px; text-align: center; font-weight: 900; font-size: 14px; color: #000; letter-spacing: 2px; }
       `}</style>
     </div>
   );
