@@ -4,8 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 
 /**
- * LERNITT-V2 GLOBAL LAYOUT (Merged)
- * Injects the Daily.co Video SDK and standardizes site metadata.
+ * LERNITT-V2 GLOBAL LAYOUT
  *
  */
 
@@ -22,9 +21,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* italki-standard: Ensuring the Video Engine is loaded globally 
-            so Alice or Bob can enter live rooms without latency. 
-            */}
+        {/* italki-standard: Loading the Video Engine globally 
+            to prevent "Daily is not defined" errors during calls. */}
         <Script 
           src="https://unpkg.com/@daily-co/daily-js" 
           strategy="beforeInteractive" 
