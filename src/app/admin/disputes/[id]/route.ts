@@ -1,14 +1,18 @@
 // @ts-nocheck
 import { NextResponse } from 'next/server';
-import clientPromise from '../../../../../lib/database/mongodb';
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../auth/[...nextauth]/route";
 import { ObjectId } from 'mongodb';
+
+/** * FIXED PATHS FOR LERNITT-V2
+ * We corrected the 'dots' to find your database (4 levels up) 
+ * and your login logic (3 levels up).
+ */
+import clientPromise from "../../../../lib/database/mongodb";
+import { authOptions } from "../../../api/auth/[...nextauth]/route";
 
 /**
  * PATCH /api/admin/disputes/[id]
- * Allows an admin to resolve or reject a dispute.
- * Ported from v1 admin.js PATCH /api/admin/disputes/:id/status
+ * Merged version: Keeps your v1 validation but uses v2 paths.
  */
 export async function PATCH(
   request: Request,
@@ -24,7 +28,7 @@ export async function PATCH(
   try {
     const { status, resolution } = await request.json();
     
-    // Validation: Match v1 enum ['resolved', 'rejected']
+    // Validation: Match your v1 enum
     if (!['resolved', 'rejected'].includes(status)) {
       return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
     }
