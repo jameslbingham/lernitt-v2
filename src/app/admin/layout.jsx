@@ -1,11 +1,12 @@
 // @ts-nocheck
 import React from 'react';
 import { getServerSession } from "next-auth/next";
-/** * FIXED PATH FOR LERNITT-V2
- * We use two sets of dots (../) to go from /admin/ up to /app/ 
- * and then into /api/ to find the login logic.
+/** * SOPHISTICATED PATH FIX:
+ * We replaced the 'dots' with the '@' symbol. 
+ * This tells Render: "Go straight to the app folder" 
+ * to find your login logic.
  */
-import { authOptions } from "../api/auth/[...nextauth]/route";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import Link from 'next/link';
 
@@ -14,7 +15,7 @@ export default async function AdminLayout({ children }) {
 
   /**
    * Security Guard: Ensures only users with 'admin' role can enter.
-   * Redirects unauthorized users to the home page if they try to sneak in.
+   * Redirects unauthorized users to the home page.
    */
   if (!session || session.user.role !== 'admin') {
     redirect('/');
@@ -107,38 +108,4 @@ export default async function AdminLayout({ children }) {
           font-size: 14px;
           display: flex;
           align-items: center;
-          gap: 12px;
-          transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .nav-item:hover {
-          background: #1a1a1a;
-          color: #fff;
-        }
-        .nav-icon {
-          font-size: 18px;
-        }
-        .sidebar-footer {
-          border-top: 1px solid #222;
-          padding-top: 24px;
-        }
-        .back-link {
-          color: #444;
-          text-decoration: none;
-          font-size: 11px;
-          font-weight: 900;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-        .back-link:hover {
-          color: #888;
-        }
-        .admin-main {
-          flex: 1;
-          padding: 40px;
-          overflow-y: auto;
-          background: #fff;
-        }
-      `}</style>
-    </div>
-  );
-}
+          gap: 12
