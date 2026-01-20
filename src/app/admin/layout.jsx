@@ -108,4 +108,38 @@ export default async function AdminLayout({ children }) {
           font-size: 14px;
           display: flex;
           align-items: center;
-          gap: 12
+          gap: 12px;
+          transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .nav-item:hover {
+          background: #1a1a1a;
+          color: #fff;
+        }
+        .nav-icon {
+          font-size: 18px;
+        }
+        .sidebar-footer {
+          border-top: 1px solid #222;
+          padding-top: 24px;
+        }
+        .back-link {
+          color: #444;
+          text-decoration: none;
+          font-size: 11px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .back-link:hover {
+          color: #888;
+        }
+        .admin-main {
+          flex: 1;
+          padding: 40px;
+          overflow-y: auto;
+          background: #fff;
+        }
+      `}</style>
+    </div>
+  );
+}
