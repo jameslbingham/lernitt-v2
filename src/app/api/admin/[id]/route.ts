@@ -1,14 +1,18 @@
 // @ts-nocheck
 import { NextResponse } from 'next/server';
-import clientPromise from '../../../../../lib/database/mongodb';
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../auth/[...nextauth]/route";
 import { ObjectId } from 'mongodb';
 
+/** * FIXED PATHS FOR LERNITT-V2
+ * We corrected the 'dots' so the app can find your database 
+ * and login logic on Render's 2026-standard servers.
+ */
+import { authOptions } from "../../auth/[...nextauth]/route";
+import clientPromise from "../../../../lib/database/mongodb";
+
 /**
- * PATCH /api/admin/disputes/[id]
+ * PATCH /api/admin/[id]
  * Allows an admin to resolve or reject a dispute.
- * Ported from v1 admin.js PATCH /api/admin/disputes/:id/status
  */
 export async function PATCH(
   request: Request,
@@ -24,7 +28,7 @@ export async function PATCH(
   try {
     const { status, resolution } = await request.json();
     
-    // Validation: Match v1 enum ['resolved', 'rejected']
+    // Validation: Match v1 rules
     if (!['resolved', 'rejected'].includes(status)) {
       return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
     }
