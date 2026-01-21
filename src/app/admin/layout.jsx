@@ -1,10 +1,9 @@
 // @ts-nocheck
 import React from 'react';
 import { getServerSession } from "next-auth/next";
-/** * SOPHISTICATED PATH FIX:
- * We replaced the 'dots' with the '@' symbol. 
- * This tells Render: "Go straight to the app folder" 
- * to find your login logic.
+/** * GPS PATH FIX:
+ * We use the '@' symbol to point directly to your project folders.
+ * This tells Render exactly where to find your login logic.
  */
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
@@ -15,7 +14,6 @@ export default async function AdminLayout({ children }) {
 
   /**
    * Security Guard: Ensures only users with 'admin' role can enter.
-   * Redirects unauthorized users to the home page.
    */
   if (!session || session.user.role !== 'admin') {
     redirect('/');
