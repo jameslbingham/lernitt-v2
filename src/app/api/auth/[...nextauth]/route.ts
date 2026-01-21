@@ -14,11 +14,17 @@ export const authOptions = {
   ],
   callbacks: {
     async session({ session, user }: any) {
-      session.user.id = user.id;
-      session.user.role = user.role || 'user'; // Ensures Admin Bob has his role
+      if (session.user) {
+        session.user.id = user.id;
+        session.user.role = user.role || 'user'; 
+      }
       return session;
     },
   },
+  pages: {
+    signIn: '/login',
+  },
+  debug: true, // This will help us see any further issues in the Render logs
 };
 
 const handler = NextAuth(authOptions);
