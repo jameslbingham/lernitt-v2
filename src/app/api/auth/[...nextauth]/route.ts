@@ -23,8 +23,7 @@ export const authOptions = {
   },
   pages: {
     signIn: '/login',
-  },
-  debug: true, // This will help us see any further issues in the Render logs
+  }
 };
 
 const handler = NextAuth(authOptions);
