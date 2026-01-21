@@ -3,16 +3,16 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
 import { ObjectId } from 'mongodb';
 
-/** * FIXED PATHS FOR LERNITT-V2
- * We corrected the 'dots' so the app can find your database 
- * and login logic on Render's 2026-standard servers.
+/** * GPS PATH FIX:
+ * We use the '@' symbol to point directly to your project folders.
+ * This tells Render exactly where to find your database and auth logic.
  */
-import { authOptions } from "../../auth/[...nextauth]/route";
-import clientPromise from "../../../../lib/database/mongodb";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import clientPromise from "@/lib/database/mongodb";
 
 /**
  * PATCH /api/admin/[id]
- * Allows an admin to resolve or reject a dispute.
+ * Merged version: Keeps your dispute logic but fixes the paths for Render.
  */
 export async function PATCH(
   request: Request,
