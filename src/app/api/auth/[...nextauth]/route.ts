@@ -1,0 +1,25 @@
+// src/app/api/auth/[...nextauth]/route.ts
+import NextAuth from "next-auth";
+import GitHubProvider from "next-auth/providers/github";
+import { MongoDBAdapter } from "@auth/mongodb-adapter";
+import clientPromise from "@/lib/database/mongodb";
+
+export const authOptions = {
+  adapter: MongoDBAdapter(clientPromise),
+  providers: [
+    GitHubProvider({
+      clientId: process.env.GITHUB_ID!,
+      clientSecret: process.env.GITHUB_SECRET!,
+    }),
+  ],
+  callbacks: {
+    async session({ session, user }: any) {
+      session.user.id = user.id;
+      session.user.role = user.role || 'user'; // Ensures Admin Bob has his role
+      return session;
+    },
+  },
+};
+
+const handler = NextAuth(authOptions);
+export { handler as GET, handler as POST };
