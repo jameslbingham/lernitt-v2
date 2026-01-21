@@ -1,11 +1,10 @@
 // src/app/api/auth/[...nextauth]/route.ts
 import NextAuth from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
-import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
 import clientPromise from "@/lib/database/mongodb";
 
 export const authOptions = {
-  adapter: MongoDBAdapter(clientPromise),
+  // Direct Link Strategy: Bypasses the failing adapter package
   providers: [
     GitHubProvider({
       clientId: process.env.GITHUB_ID!,
@@ -13,17 +12,37 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async session({ session, user }: any) {
+    async signIn({ user, account, profile }: any) {
+      const client = await clientPromise;
+      const db = client.db("lernitt-v2");
+      
+      // Manually link user to MongoDB
+      const existingUser = await db.collection("users").findOne({ email: user.email });
+      if (!existingUser) {
+        await db.collection("users").insertOne({
+          name: user.name,
+          email: user.email,
+          image: user.image,
+          role: 'user', // Default role
+          createdAt: new Date()
+        });
+      }
+      return true;
+    },
+    async session({ session, token }: any) {
       if (session?.user) {
-        session.user.id = user.id;
-        session.user.role = user.role || 'user';
+        const client = await clientPromise;
+        const db = client.db("lernitt-v2");
+        const dbUser = await db.collection("users").findOne({ email: session.user.email });
+        if (dbUser) {
+          session.user.id = dbUser._id.toString();
+          session.user.role = dbUser.role || 'user';
+        }
       }
       return session;
     },
   },
-  pages: {
-    signIn: '/login',
-  }
+  pages: { signIn: '/login' }
 };
 
 const handler = NextAuth(authOptions);
