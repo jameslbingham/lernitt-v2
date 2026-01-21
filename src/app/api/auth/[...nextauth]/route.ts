@@ -1,7 +1,7 @@
 // src/app/api/auth/[...nextauth]/route.ts
 import NextAuth from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
-import { MongoDBAdapter } from "@auth/mongodb-adapter";
+import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
 import clientPromise from "@/lib/database/mongodb";
 
 export const authOptions = {
@@ -14,9 +14,9 @@ export const authOptions = {
   ],
   callbacks: {
     async session({ session, user }: any) {
-      if (session.user) {
+      if (session?.user) {
         session.user.id = user.id;
-        session.user.role = user.role || 'user'; 
+        session.user.role = user.role || 'user';
       }
       return session;
     },
