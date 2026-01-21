@@ -1,14 +1,19 @@
 // @ts-nocheck
 import { NextResponse } from 'next/server';
-import clientPromise from '../../../../../lib/database/mongodb';
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../auth/[...nextauth]/route";
 import { ObjectId } from 'mongodb';
+
+/** * GPS PATH FIX:
+ * We use the '@' symbol to point directly to your project folders.
+ * This ensures the server never gets lost in deep folder structures.
+ */
+import clientPromise from "@/lib/database/mongodb";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 /**
  * PATCH /api/admin/disputes/[id]
  * Unified Action Route for: Resolve, Reject, Approve Refund, Deny, and Warnings.
- * Ported from v1 admin.js and DisputesTab logic
+ * Merged Version: Corrects paths while preserving your note-pushing and status logic.
  */
 export async function PATCH(
   request: Request,
